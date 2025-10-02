@@ -6,7 +6,6 @@ AI Prompt Maker - Standalone Application
 """
 import streamlit as st
 import streamlit.components.v1 as st_components
-import pandas as pd
 from typing import Dict, Any, List, Optional
 import time
 import uuid
