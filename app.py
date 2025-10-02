@@ -160,7 +160,7 @@ def render_prompt_generator(domain: str = "game_dev"):
         context_expansions = {}
         rule_expansions = {}
 
-    with st.form("prompt_form"):
+    with st.form(f"{domain}_prompt_form"):
         # 역할 입력 (다중 선택)
         role_options = keywords.get('role', [])
         selected_roles = st.multiselect(
