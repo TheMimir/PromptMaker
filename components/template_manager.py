@@ -143,16 +143,8 @@ def render_template_card(template: Dict[str, Any], data_handler: DataHandler):
             if st.button("📋 복사", key=f"copy_btn_{template_id}"):
                 current_version_data = get_current_version_data(template)
                 if current_version_data:
-                    try:
-                        import pyperclip
-                        pyperclip.copy(current_version_data['prompt'])
-                        st.success("클립보드에 복사 완료!", icon="✅")
-                    except ImportError:
-                        st.session_state.clipboard_content = current_version_data['prompt']
-                        st.success("클립보드에 복사 완료! (세션 저장)", icon="✅")
-                    except Exception as e:
-                        st.session_state.clipboard_content = current_version_data['prompt']
-                        st.warning(f"클립보드 복사 실패. 세션에 저장됨: {e}", icon="⚠️")
+                    st.session_state.clipboard_content = current_version_data['prompt']
+                    st.success("클립보드에 복사 완료!", icon="✅")
 
         with col4:
             show_actions = st.button(

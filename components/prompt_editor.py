@@ -412,16 +412,8 @@ def render_component_editor(template: Dict[str, Any], version_data: Dict[str, An
 
     with save_col3:
         if st.button("📋 복사", help="프롬프트를 클립보드에 복사"):
-            try:
-                import pyperclip
-                pyperclip.copy(generated_prompt)
-                st.success("클립보드에 복사되었습니다!")
-            except ImportError:
-                st.session_state.clipboard_content = generated_prompt
-                st.success("클립보드에 복사되었습니다! (세션 저장)")
-            except Exception as e:
-                st.session_state.clipboard_content = generated_prompt
-                st.warning(f"클립보드 복사 실패. 세션에 저장됨: {e}")
+            st.session_state.clipboard_content = generated_prompt
+            st.success("클립보드에 복사되었습니다!")
 
     with save_col4:
         if st.button("📤 내보내기", help="템플릿을 파일로 내보내기"):
@@ -532,16 +524,8 @@ def render_text_editor(template: Dict[str, Any], version_data: Dict[str, Any],
 
     with save_col3:
         if st.button("📋 복사"):
-            try:
-                import pyperclip
-                pyperclip.copy(edited_prompt)
-                st.success("클립보드에 복사되었습니다!")
-            except ImportError:
-                st.session_state.clipboard_content = edited_prompt
-                st.success("클립보드에 복사되었습니다! (세션 저장)")
-            except Exception as e:
-                st.session_state.clipboard_content = edited_prompt
-                st.warning(f"클립보드 복사 실패. 세션에 저장됨: {e}")
+            st.session_state.clipboard_content = edited_prompt
+            st.success("클립보드에 복사되었습니다!")
 
 
 def render_export_dialog(template: Dict[str, Any], data_handler: DataHandler):

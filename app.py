@@ -293,45 +293,39 @@ def render_prompt_generator():
 
             with col1:
                 if st.button("📋 클립보드에 복사", type="primary", key="copy_button"):
-                    # 방법 1: pyperclip 사용 (가장 안정적)
-                    try:
-                        import pyperclip
-                        pyperclip.copy(generated_prompt)
-                        st.success("✅ 클립보드에 복사되었습니다!")
-                    except ImportError:
-                        # 방법 2: 세션 스테이트 + JavaScript 폴백
-                        st.session_state.clipboard_content = generated_prompt
+                    # JavaScript를 사용한 클립보드 복사
+                    st.session_state.clipboard_content = generated_prompt
 
-                        escaped_text = json.dumps(generated_prompt)
-                        copy_script = f"""
-                        <script>
-                        (function() {{
-                            const text = {escaped_text};
-                            if (navigator.clipboard && navigator.clipboard.writeText) {{
-                                navigator.clipboard.writeText(text).then(
-                                    () => console.log('✅ Clipboard copy successful'),
-                                    (err) => console.error('❌ Clipboard copy failed:', err)
-                                );
-                            }} else {{
-                                const textarea = document.createElement('textarea');
-                                textarea.value = text;
-                                textarea.style.position = 'fixed';
-                                textarea.style.opacity = '0';
-                                document.body.appendChild(textarea);
-                                textarea.select();
-                                try {{
-                                    document.execCommand('copy');
-                                    console.log('✅ Fallback copy successful');
-                                }} catch (err) {{
-                                    console.error('❌ Fallback copy failed:', err);
-                                }}
-                                document.body.removeChild(textarea);
+                    escaped_text = json.dumps(generated_prompt)
+                    copy_script = f"""
+                    <script>
+                    (function() {{
+                        const text = {escaped_text};
+                        if (navigator.clipboard && navigator.clipboard.writeText) {{
+                            navigator.clipboard.writeText(text).then(
+                                () => console.log('✅ Clipboard copy successful'),
+                                (err) => console.error('❌ Clipboard copy failed:', err)
+                            );
+                        }} else {{
+                            const textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.style.position = 'fixed';
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            try {{
+                                document.execCommand('copy');
+                                console.log('✅ Fallback copy successful');
+                            }} catch (err) {{
+                                console.error('❌ Fallback copy failed:', err);
                             }}
-                        }})();
-                        </script>
-                        """
-                        st_components.html(copy_script, height=0)
-                        st.success("✅ 클립보드에 복사되었습니다!")
+                            document.body.removeChild(textarea);
+                        }}
+                    }})();
+                    </script>
+                    """
+                    st_components.html(copy_script, height=0)
+                    st.success("✅ 클립보드에 복사되었습니다!")
 
             with col2:
                 # 다운로드 버튼
