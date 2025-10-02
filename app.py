@@ -129,12 +129,16 @@ def render_header():
     """, unsafe_allow_html=True)
 
 
-def render_prompt_generator():
-    """프롬프트 생성기 UI 렌더링"""
+def render_prompt_generator(domain: str = "game_dev"):
+    """프롬프트 생성기 UI 렌더링
+
+    Args:
+        domain: 도메인 ID (game_dev, uiux 등)
+    """
     service = PromptMakerService()
 
     # 세션 상태 초기화
-    session_key = "standalone_prompt_maker"
+    session_key = f"{domain}_prompt_maker"
     if f"{session_key}_last_generated_prompt" not in st.session_state:
         st.session_state[f"{session_key}_last_generated_prompt"] = None
     if f"{session_key}_show_save_dialog" not in st.session_state:
@@ -144,11 +148,11 @@ def render_prompt_generator():
 
     # 설정 파일 로드
     try:
-        config = service.get_config()
-        keywords = config.get('keywords', {})
-        goal_expansions = config.get('goal_expansions', {})
-        context_expansions = config.get('context_expansions', {})
-        rule_expansions = config.get('rule_expansions', {})
+        domain_config = service.get_domain_config(domain)
+        keywords = domain_config.get('keywords', {})
+        goal_expansions = domain_config.get('goal_expansions', {})
+        context_expansions = domain_config.get('context_expansions', {})
+        rule_expansions = domain_config.get('rule_expansions', {})
     except Exception as e:
         st.error(f"설정 파일 로드 실패: {e}")
         keywords = {}
@@ -321,16 +325,24 @@ def main():
     # 헤더
     render_header()
 
-    # 탭 생성
-    tab1, tab2, tab3 = st.tabs(["🎯 프롬프트 생성", "📋 템플릿 관리", "✏️ 프롬프트 편집"])
+    # 탭 생성 (도메인별 프롬프트 생성 탭 추가)
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "🎮 게임 개발",
+        "🎨 UI/UX 디자인",
+        "📋 템플릿 관리",
+        "✏️ 프롬프트 편집"
+    ])
 
     with tab1:
-        render_prompt_generator()
+        render_prompt_generator(domain="game_dev")
 
     with tab2:
-        render_template_manager()
+        render_prompt_generator(domain="uiux")
 
     with tab3:
+        render_template_manager()
+
+    with tab4:
         render_prompt_editor()
 
     # 푸터

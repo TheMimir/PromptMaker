@@ -117,6 +117,81 @@ class PromptMakerService:
         config = self.get_config()
         return config.get("keywords", {})
 
+    def get_domain_config(self, domain: str) -> Dict[str, Any]:
+        """특정 도메인 설정 반환
+
+        Args:
+            domain: 도메인 ID (예: "game_dev", "uiux")
+
+        Returns:
+            도메인 설정 딕셔너리
+        """
+        config = self.get_config()
+
+        # 새 도메인 구조 확인
+        if 'domains' in config:
+            domains = config.get('domains', {})
+            if domain in domains:
+                return domains[domain]
+            # 기본값으로 game_dev 반환
+            return domains.get('game_dev', {})
+
+        # 레거시 구조 (도메인 없음) - 자동 마이그레이션
+        return self._migrate_legacy_to_domain(config, 'game_dev')
+
+    def _migrate_legacy_to_domain(self, legacy_config: Dict, domain: str = 'game_dev') -> Dict[str, Any]:
+        """레거시 config를 도메인 구조로 변환
+
+        Args:
+            legacy_config: 기존 config 구조
+            domain: 변환할 도메인명
+
+        Returns:
+            도메인 형식의 설정
+        """
+        return {
+            'name': '게임 개발',
+            'description': '게임 기획, 개발, QA 관련 프롬프트',
+            'icon': '🎮',
+            'enabled': True,
+            'keywords': legacy_config.get('keywords', {}),
+            'goal_expansions': legacy_config.get('goal_expansions', {}),
+            'context_expansions': legacy_config.get('context_expansions', {}),
+            'rule_expansions': legacy_config.get('rule_expansions', {})
+        }
+
+    def list_domains(self) -> List[Dict[str, str]]:
+        """활성화된 도메인 목록 반환
+
+        Returns:
+            도메인 정보 리스트 [{'id': 'game_dev', 'name': '게임 개발', ...}, ...]
+        """
+        config = self.get_config()
+
+        # 새 도메인 구조
+        if 'domains' in config:
+            domains = config.get('domains', {})
+            return [
+                {
+                    'id': domain_id,
+                    'name': domain_data.get('name', domain_id),
+                    'description': domain_data.get('description', ''),
+                    'icon': domain_data.get('icon', '📁')
+                }
+                for domain_id, domain_data in domains.items()
+                if domain_data.get('enabled', True)
+            ]
+
+        # 레거시 구조 - 게임 개발만 반환
+        return [
+            {
+                'id': 'game_dev',
+                'name': '게임 개발',
+                'description': '게임 기획, 개발, QA 관련 프롬프트',
+                'icon': '🎮'
+            }
+        ]
+
     def get_categories(self) -> List[str]:
         """카테고리 목록 반환"""
         config = self.get_config()

@@ -48,3 +48,4 @@ ai_prompt_maker/templates/backup/
 
 # Logs
 *.log
+*.backup.json
