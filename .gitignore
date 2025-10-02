@@ -29,6 +29,9 @@ venv/
 # Streamlit
 .streamlit/secrets.toml
 
+# Claude Code
+.claude/
+
 # IDE
 .vscode/
 .idea/
