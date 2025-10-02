@@ -12,7 +12,8 @@
       "Bash(git commit:*)",
       "Bash(open:*)",
       "Bash(git push:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
