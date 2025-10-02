@@ -5,11 +5,9 @@ AI Prompt Maker - Standalone Application
 게임 개발을 위한 AI 프롬프트 생성 도구
 """
 import streamlit as st
-import streamlit.components.v1 as st_components
 from typing import Dict, Any, List, Optional
 import time
 import uuid
-import json
 import os
 from pathlib import Path
 
@@ -287,54 +285,18 @@ def render_prompt_generator():
             # 프롬프트 표시
             st.code(generated_prompt, language="text")
 
-            # 액션 버튼들
-            col1, col2 = st.columns(2)
+            # 복사 안내 메시지
+            st.caption("💡 위 코드 블록 오른쪽 상단의 복사 아이콘(📋)을 클릭하여 클립보드에 복사할 수 있습니다")
 
-            with col1:
-                if st.button("📋 클립보드에 복사", type="primary", key="copy_button"):
-                    # JavaScript를 사용한 클립보드 복사
-                    st.session_state.clipboard_content = generated_prompt
-
-                    escaped_text = json.dumps(generated_prompt)
-                    copy_script = f"""
-                    <script>
-                    (function() {{
-                        const text = {escaped_text};
-                        if (navigator.clipboard && navigator.clipboard.writeText) {{
-                            navigator.clipboard.writeText(text).then(
-                                () => console.log('✅ Clipboard copy successful'),
-                                (err) => console.error('❌ Clipboard copy failed:', err)
-                            );
-                        }} else {{
-                            const textarea = document.createElement('textarea');
-                            textarea.value = text;
-                            textarea.style.position = 'fixed';
-                            textarea.style.opacity = '0';
-                            document.body.appendChild(textarea);
-                            textarea.select();
-                            try {{
-                                document.execCommand('copy');
-                                console.log('✅ Fallback copy successful');
-                            }} catch (err) {{
-                                console.error('❌ Fallback copy failed:', err);
-                            }}
-                            document.body.removeChild(textarea);
-                        }}
-                    }})();
-                    </script>
-                    """
-                    st_components.html(copy_script, height=0)
-                    st.success("✅ 클립보드에 복사되었습니다!")
-
-            with col2:
-                # 다운로드 버튼
-                st.download_button(
-                    label="💾 텍스트 파일로 저장",
-                    data=generated_prompt,
-                    file_name=f"prompt_{int(time.time())}.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+            # 다운로드 버튼
+            st.download_button(
+                label="💾 텍스트 파일로 저장",
+                data=generated_prompt,
+                file_name=f"prompt_{int(time.time())}.txt",
+                mime="text/plain",
+                type="primary",
+                use_container_width=True
+            )
 
         except Exception as e:
             st.error(f"❌ 프롬프트 생성 오류: {e}")
