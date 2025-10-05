@@ -199,40 +199,62 @@ def render_prompt_generator(domain: str = "game_dev"):
             categories = formats_data.get('categories', {})
             formats = formats_data.get('formats', {})
 
-            # 카테고리 선택
-            category_options = {cat_id: cat_data['name']
-                              for cat_id, cat_data in categories.items()}
+            # 카테고리 선택 - 기본값으로 빈 옵션 추가
+            category_options = {"": "📂 출력 형식을 선택하세요"}
+            category_options.update({cat_id: cat_data['name']
+                                   for cat_id, cat_data in categories.items()})
+
             selected_category = st.selectbox(
-                "📊 출력 형식 카테고리",
+                "📊 출력 형식 카테고리 *",
                 options=list(category_options.keys()),
-                format_func=lambda x: category_options[x]
+                format_func=lambda x: category_options[x],
+                help="출력 형식 카테고리를 먼저 선택하세요"
             )
 
-            # 해당 카테고리의 포맷 선택
-            category_formats = {fmt_id: fmt_data
-                               for fmt_id, fmt_data in formats.items()
-                               if fmt_data.get('category') == selected_category}
+            # 세부 형식 선택 - 카테고리가 선택된 경우에만 활성화
+            selected_format = None
+            format_data = None
 
-            format_options = {fmt_id: fmt_data['name']
-                            for fmt_id, fmt_data in category_formats.items()}
+            if selected_category and selected_category != "":
+                # 해당 카테고리의 포맷만 필터링
+                category_formats = {fmt_id: fmt_data
+                                   for fmt_id, fmt_data in formats.items()
+                                   if fmt_data.get('category') == selected_category}
 
-            selected_format = st.selectbox(
-                "📝 세부 형식",
-                options=list(format_options.keys()),
-                format_func=lambda x: format_options[x]
-            )
+                if category_formats:
+                    format_options = {fmt_id: fmt_data['name']
+                                    for fmt_id, fmt_data in category_formats.items()}
 
-            # 선택된 포맷 정보 표시
-            if selected_format:
-                format_data = formats[selected_format]
-                with st.expander("ℹ️ 형식 정보", expanded=False):
-                    st.write(f"**설명:** {format_data['description']}")
-                    if format_data.get('example_output'):
-                        st.markdown("**예시 출력:**")
-                        st.code(format_data['example_output'], language="text")
+                    selected_format = st.selectbox(
+                        "📝 세부 형식 *",
+                        options=list(format_options.keys()),
+                        format_func=lambda x: format_options[x],
+                        help="선택한 카테고리의 세부 형식을 선택하세요"
+                    )
 
-            selected_output = format_data.get('name', '보고서 형식')
-            template_instruction = format_data.get('template', '')
+                    # 선택된 포맷 정보 표시
+                    if selected_format:
+                        format_data = formats[selected_format]
+                        with st.expander("ℹ️ 형식 정보", expanded=False):
+                            st.write(f"**설명:** {format_data['description']}")
+                            if format_data.get('example_output'):
+                                st.markdown("**예시 출력:**")
+                                st.code(format_data['example_output'], language="text")
+                else:
+                    st.info("이 카테고리에는 사용 가능한 형식이 없습니다.")
+            else:
+                # 카테고리가 선택되지 않았을 때
+                st.selectbox(
+                    "📝 세부 형식",
+                    options=[""],
+                    format_func=lambda x: "⬆️ 먼저 출력 형식 카테고리를 선택하세요",
+                    disabled=True,
+                    help="출력 형식 카테고리를 먼저 선택하세요"
+                )
+
+            # 출력 정보 설정
+            selected_output = format_data.get('name', '보고서 형식') if format_data else '보고서 형식'
+            template_instruction = format_data.get('template', '') if format_data else ''
 
         except Exception as e:
             st.error(f"출력 형식 로드 실패: {e}")
