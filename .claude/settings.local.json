@@ -14,7 +14,8 @@
       "Bash(git push:*)",
       "Bash(find:*)",
       "WebSearch",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Read(//Users/mimir/.ssh/**)"
     ],
     "deny": [],
     "ask": []
