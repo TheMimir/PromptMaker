@@ -11,6 +11,13 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
+try:
+    import jsonschema
+    JSONSCHEMA_AVAILABLE = True
+except ImportError:
+    JSONSCHEMA_AVAILABLE = False
+    print("Warning: jsonschema not installed. JSON validation will be skipped.")
+
 
 class PromptCategory(Enum):
     """프롬프트 카테고리"""
@@ -261,7 +268,7 @@ class PromptVersion:
 
 @dataclass
 class PromptTemplate:
-    """프롬프트 템플릿"""
+    """프롬프트 템플릿 (with JSON schema validation)"""
     name: str
     category: PromptCategory
     versions: List[PromptVersion] = field(default_factory=list)
@@ -269,6 +276,80 @@ class PromptTemplate:
     current_version: int = 1
     tags: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    # JSON Schema for validation
+    JSON_SCHEMA = {
+        "type": "object",
+        "required": ["name", "category", "template_id", "versions"],
+        "properties": {
+            "template_id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]+$",
+                "minLength": 1,
+                "maxLength": 100
+            },
+            "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+            },
+            "category": {
+                "type": "string",
+                "enum": ["기획", "프로그램", "아트", "QA", "전체"]
+            },
+            "current_version": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "versions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                    "type": "object",
+                    "required": ["version", "components"],
+                    "properties": {
+                        "version": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "components": {
+                            "type": "object",
+                            "required": ["goal"],
+                            "properties": {
+                                "goal": {"type": "string", "minLength": 1, "maxLength": 500},
+                                "document": {"type": "string", "maxLength": 10000},
+                                "output": {"type": "string", "maxLength": 1000},
+                                "role": {
+                                    "type": "array",
+                                    "maxItems": 5,
+                                    "items": {"type": "string", "maxLength": 200}
+                                },
+                                "context": {
+                                    "type": "array",
+                                    "maxItems": 5,
+                                    "items": {"type": "string", "maxLength": 200}
+                                },
+                                "rule": {
+                                    "type": "array",
+                                    "maxItems": 5,
+                                    "items": {"type": "string", "maxLength": 200}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "tags": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {"type": "string", "maxLength": 50}
+            },
+            "metadata": {
+                "type": "object"
+            }
+        }
+    }
 
     def __post_init__(self):
         """초기화 후 처리"""
@@ -396,8 +477,46 @@ class PromptTemplate:
 
     @classmethod
     def from_json(cls, json_str: str) -> 'PromptTemplate':
-        """JSON 문자열에서 생성"""
-        data = json.loads(json_str)
+        """JSON 문자열에서 생성 (with validation)
+
+        Args:
+            json_str: JSON 문자열
+
+        Returns:
+            PromptTemplate 객체
+
+        Raises:
+            ValueError: JSON이 유효하지 않거나 너무 큰 경우
+            PromptValidationError: Schema 검증 실패
+        """
+        # Size check to prevent DoS
+        MAX_JSON_SIZE = 1_000_000  # 1MB
+        if len(json_str) > MAX_JSON_SIZE:
+            raise ValueError(
+                f"JSON payload too large: {len(json_str)} bytes > {MAX_JSON_SIZE} bytes"
+            )
+
+        try:
+            # Parse JSON
+            data = json.loads(json_str)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON format: {e}")
+
+        # Validate against schema if jsonschema is available
+        if JSONSCHEMA_AVAILABLE:
+            try:
+                jsonschema.validate(instance=data, schema=cls.JSON_SCHEMA)
+            except jsonschema.ValidationError as e:
+                # Extract useful error information
+                error_path = " -> ".join(str(p) for p in e.path) if e.path else "root"
+                raise PromptValidationError(
+                    f"JSON schema validation failed at {error_path}: {e.message}"
+                )
+            except jsonschema.SchemaError as e:
+                # Schema itself is invalid (shouldn't happen in production)
+                raise PromptValidationError(f"Invalid JSON schema: {e}")
+
+        # Create template from validated data
         return cls.from_dict(data)
 
     def get_summary(self) -> Dict[str, Any]:

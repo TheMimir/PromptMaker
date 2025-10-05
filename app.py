@@ -11,10 +11,62 @@ import uuid
 import os
 from pathlib import Path
 
+try:
+    import bleach
+    BLEACH_AVAILABLE = True
+except ImportError:
+    BLEACH_AVAILABLE = False
+    print("Warning: bleach not installed. HTML sanitization disabled.")
+
 from components.template_manager import render_template_manager
 from components.prompt_editor import render_prompt_editor
 from ai_prompt_maker.service import PromptMakerService
 from ai_prompt_maker.models import PromptTemplate, PromptComponent, PromptCategory, PromptValidationError
+
+
+def sanitize_html(html_content: str) -> str:
+    """Sanitize HTML content to prevent XSS attacks
+
+    Args:
+        html_content: HTML string to sanitize
+
+    Returns:
+        Sanitized HTML string
+    """
+    if not BLEACH_AVAILABLE:
+        # If bleach not available, return as-is with warning logged
+        return html_content
+
+    # Allow safe HTML tags and attributes for styling
+    allowed_tags = ['div', 'span', 'h1', 'h2', 'h3', 'p', 'br', 'style']
+    allowed_attributes = {
+        '*': ['style', 'class'],
+        'div': ['style', 'class'],
+        'span': ['style', 'class'],
+        'h1': ['style', 'class'],
+        'h2': ['style', 'class'],
+        'h3': ['style', 'class'],
+        'p': ['style', 'class']
+    }
+
+    # Allow common CSS properties
+    allowed_styles = [
+        'color', 'background', 'background-color', 'background-clip',
+        '-webkit-background-clip', '-webkit-text-fill-color',
+        'font-size', 'font-weight', 'font-family',
+        'margin', 'padding', 'border', 'border-bottom', 'border-radius',
+        'box-shadow', 'transition', 'text-align',
+        'width', 'height', 'max-width', 'min-height',
+        'display', 'flex-direction', 'align-items', 'justify-content', 'gap'
+    ]
+
+    return bleach.clean(
+        html_content,
+        tags=allowed_tags,
+        attributes=allowed_attributes,
+        styles=allowed_styles,
+        strip=True
+    )
 
 
 def apply_custom_css():
@@ -95,7 +147,7 @@ def apply_custom_css():
             box-shadow: 0 0 0 1px #ff4b4b;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)  # Safe: Static HTML/CSS only, no user input  # Safe: Static CSS only, no user input
 
 
 def render_header():
@@ -126,7 +178,7 @@ def render_header():
             게임 개발을 위한 AI 프롬프트 생성 및 관리 도구
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)  # Safe: Static HTML/CSS only, no user input
 
 
 def render_prompt_generator(domain: str = "game_dev"):
@@ -467,7 +519,7 @@ def main():
             AI Prompt Maker v2.3.0 | Made with ❤️ by TheMimir
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)  # Safe: Static HTML/CSS only, no user input
 
 
 if __name__ == "__main__":
