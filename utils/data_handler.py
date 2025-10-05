@@ -6,6 +6,7 @@ from datetime import datetime
 
 from ai_prompt_maker.service import PromptMakerService
 from ai_prompt_maker.models import PromptTemplate, PromptComponent, PromptCategory
+from utils.template_storage import TemplateStorageManager
 
 
 class DataHandler:
@@ -20,23 +21,96 @@ class DataHandler:
         return self.service.get_config()
 
     def list_templates(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
-        """템플릿 목록 조회"""
-        return self.service.list_templates(category=category)
+        """템플릿 목록 조회 (파일시스템 + localStorage)"""
+        # 파일시스템 템플릿 로드
+        filesystem_templates = self.service.list_templates(category=category)
+
+        # localStorage 템플릿 로드
+        localstorage_templates = TemplateStorageManager.load_templates(use_cache=True)
+
+        # localStorage 템플릿을 딕셔너리로 변환하고 소스 표시 추가
+        localstorage_dicts = []
+        for template in localstorage_templates:
+            template_dict = template.to_dict()
+            template_dict['source'] = 'localStorage'  # 소스 표시
+
+            # 카테고리 필터링
+            if category:
+                if template.category.value == category:
+                    localstorage_dicts.append(template_dict)
+            else:
+                localstorage_dicts.append(template_dict)
+
+        # 파일시스템 템플릿에도 소스 표시 추가
+        for template_dict in filesystem_templates:
+            template_dict['source'] = 'file'
+
+        # 두 목록 병합 (localStorage가 먼저, 최신 저장이므로)
+        all_templates = localstorage_dicts + filesystem_templates
+
+        return all_templates
 
     def search_templates(self, query: str) -> List[Dict[str, Any]]:
-        """템플릿 검색"""
-        return self.service.search_templates(query)
+        """템플릿 검색 (파일시스템 + localStorage)"""
+        # 파일시스템 검색
+        filesystem_results = self.service.search_templates(query)
+
+        # localStorage 템플릿 로드 및 검색
+        localstorage_templates = TemplateStorageManager.load_templates(use_cache=True)
+        localstorage_results = []
+
+        query_lower = query.lower()
+        for template in localstorage_templates:
+            # 이름, 태그, 설명에서 검색
+            if (query_lower in template.name.lower() or
+                any(query_lower in tag.lower() for tag in template.tags) or
+                (template.description and query_lower in template.description.lower())):
+                template_dict = template.to_dict()
+                template_dict['source'] = 'localStorage'
+                localstorage_results.append(template_dict)
+
+        # 파일시스템 결과에 소스 표시 추가
+        for template_dict in filesystem_results:
+            template_dict['source'] = 'file'
+
+        # 두 목록 병합
+        all_results = localstorage_results + filesystem_results
+
+        return all_results
 
     def load_template(self, template_id: str) -> Optional[Dict[str, Any]]:
-        """템플릿 로드"""
+        """템플릿 로드 (파일시스템 + localStorage)"""
+        # 먼저 파일시스템에서 시도
         template = self.service.load_template(template_id)
         if template:
-            return template.to_dict()
+            template_dict = template.to_dict()
+            template_dict['source'] = 'file'
+            return template_dict
+
+        # 파일시스템에 없으면 localStorage에서 시도
+        template = TemplateStorageManager.load_template(template_id)
+        if template:
+            template_dict = template.to_dict()
+            template_dict['source'] = 'localStorage'
+            return template_dict
+
         return None
 
     def delete_template(self, template_id: str) -> bool:
-        """템플릿 삭제"""
-        return self.service.delete_template(template_id)
+        """템플릿 삭제 (파일시스템 + localStorage)"""
+        # 먼저 어디에 있는지 확인
+        template_dict = self.load_template(template_id)
+        if not template_dict:
+            return False
+
+        source = template_dict.get('source', 'file')
+
+        if source == 'localStorage':
+            # localStorage에서 삭제
+            return TemplateStorageManager.delete_template(template_id)
+        else:
+            # 파일시스템에서 삭제
+            return self.service.delete_template(template_id)
 
     def duplicate_template(self, template_id: str, new_name: str) -> Optional[str]:
         """템플릿 복제"""

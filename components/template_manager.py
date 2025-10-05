@@ -119,10 +119,15 @@ def render_template_card(template: Dict[str, Any], data_handler: DataHandler):
             created_date = template.get('created_at', '')[:10] if template.get('created_at') else 'Unknown'
             updated_date = template.get('updated_at', '')[:10] if template.get('updated_at') else 'Unknown'
 
+            # 소스 표시
+            source = template.get('source', 'file')
+            source_badge = "💾 브라우저" if source == 'localStorage' else "📁 파일"
+
             st.caption(
                 f"카테고리: {template['category']} | "
                 f"버전: {template['current_version']} | "
-                f"생성일: {created_date}"
+                f"생성일: {created_date} | "
+                f"저장위치: {source_badge}"
             )
 
             # 태그 표시

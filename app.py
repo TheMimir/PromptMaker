@@ -22,6 +22,7 @@ from components.template_manager import render_template_manager
 from components.prompt_editor import render_prompt_editor
 from ai_prompt_maker.service import PromptMakerService
 from ai_prompt_maker.models import PromptTemplate, PromptComponent, PromptCategory, PromptValidationError
+from utils.template_storage import TemplateStorageManager
 
 
 def sanitize_html(html_content: str) -> str:
@@ -181,6 +182,136 @@ def render_header():
     """, unsafe_allow_html=True)  # Safe: Static HTML/CSS only, no user input
 
 
+def render_save_template_dialog(domain: str, session_key: str):
+    """템플릿 저장 다이얼로그 렌더링
+
+    Args:
+        domain: 도메인 ID
+        session_key: 세션 키 prefix
+    """
+    st.divider()
+    st.markdown("### 📁 템플릿으로 저장")
+    st.markdown("생성된 프롬프트를 템플릿으로 저장하면 나중에 재사용할 수 있습니다.")
+
+    # 저장할 데이터 가져오기
+    last_components = st.session_state.get(f"{session_key}_last_components")
+    last_prompt = st.session_state.get(f"{session_key}_last_generated_prompt")
+
+    if not last_components or not last_prompt:
+        st.error("❌ 저장할 프롬프트가 없습니다. 먼저 프롬프트를 생성해주세요.")
+        if st.button("닫기", key=f"{domain}_close_dialog_error"):
+            st.session_state[f"{session_key}_show_save_dialog"] = False
+            st.rerun()
+        return
+
+    # 저장 폼
+    with st.form(f"{domain}_save_template_form", clear_on_submit=False):
+        # 템플릿 이름
+        template_name = st.text_input(
+            "템플릿 이름 *",
+            placeholder="예: 게임 기능 분석용 프롬프트",
+            help="템플릿을 구분할 수 있는 이름을 입력하세요",
+            key=f"{domain}_template_name_input"
+        )
+
+        # 카테고리 선택
+        category_options = {
+            "기획": PromptCategory.PLANNING,
+            "프로그램": PromptCategory.PROGRAMMING,
+            "아트": PromptCategory.ART,
+            "QA": PromptCategory.QA,
+            "전체": PromptCategory.ALL
+        }
+
+        selected_category_name = st.selectbox(
+            "카테고리 *",
+            options=list(category_options.keys()),
+            help="템플릿이 속할 카테고리를 선택하세요",
+            key=f"{domain}_template_category_select"
+        )
+
+        # 태그 (선택)
+        tags_input = st.text_input(
+            "태그 (선택사항)",
+            placeholder="예: 기능분석, 밸런스, 시스템설계 (쉼표로 구분)",
+            help="템플릿을 찾기 쉽게 태그를 입력하세요 (쉼표로 구분)",
+            key=f"{domain}_template_tags_input"
+        )
+
+        # 설명 (선택)
+        description = st.text_area(
+            "설명 (선택사항)",
+            placeholder="이 템플릿의 용도나 특징을 간단히 설명하세요",
+            help="템플릿에 대한 추가 설명을 입력하세요",
+            height=100,
+            key=f"{domain}_template_description_input"
+        )
+
+        # 버튼 열
+        col1, col2 = st.columns(2)
+
+        with col1:
+            save_submitted = st.form_submit_button(
+                "💾 저장",
+                type="primary",
+                use_container_width=True
+            )
+
+        with col2:
+            cancel_submitted = st.form_submit_button(
+                "취소",
+                use_container_width=True
+            )
+
+    # 취소 버튼 처리
+    if cancel_submitted:
+        st.session_state[f"{session_key}_show_save_dialog"] = False
+        st.rerun()
+
+    # 저장 버튼 처리
+    if save_submitted:
+        # 검증
+        if not template_name or not template_name.strip():
+            st.error("❌ 템플릿 이름을 입력하세요")
+            return
+
+        try:
+            # 태그 파싱
+            tags = []
+            if tags_input and tags_input.strip():
+                tags = [tag.strip() for tag in tags_input.split(',') if tag.strip()]
+
+            # 카테고리 변환
+            category = category_options[selected_category_name]
+
+            # 템플릿 저장
+            success = TemplateStorageManager.save_template(
+                name=template_name.strip(),
+                category=category,
+                components_dict=last_components,
+                generated_prompt=last_prompt,
+                description=description.strip() if description else "",
+                tags=tags
+            )
+
+            if success:
+                st.success("✅ 템플릿이 성공적으로 저장되었습니다!")
+                st.info("💡 '템플릿 관리' 탭에서 저장된 템플릿을 확인할 수 있습니다")
+
+                # 다이얼로그 닫기 버튼
+                if st.button("확인", key=f"{domain}_close_dialog_success"):
+                    st.session_state[f"{session_key}_show_save_dialog"] = False
+                    st.rerun()
+            else:
+                st.error("❌ 템플릿 저장에 실패했습니다")
+
+        except Exception as e:
+            st.error(f"❌ 템플릿 저장 중 오류 발생: {e}")
+            import traceback
+            with st.expander("🔍 상세 오류 정보"):
+                st.code(traceback.format_exc())
+
+
 def render_prompt_generator(domain: str = "game_dev"):
     """프롬프트 생성기 UI 렌더링
 
@@ -197,6 +328,8 @@ def render_prompt_generator(domain: str = "game_dev"):
 
     if f"{session_key}_last_generated_prompt" not in st.session_state:
         st.session_state[f"{session_key}_last_generated_prompt"] = None
+    if f"{session_key}_last_components" not in st.session_state:
+        st.session_state[f"{session_key}_last_components"] = None
     if f"{session_key}_show_save_dialog" not in st.session_state:
         st.session_state[f"{session_key}_show_save_dialog"] = False
     if session_key_category not in st.session_state:
@@ -452,27 +585,54 @@ def render_prompt_generator(domain: str = "game_dev"):
                 generated_prompt = service.generate_prompt(components)
                 st.session_state[f"{session_key}_last_generated_prompt"] = generated_prompt
 
+                # Store components for template saving
+                st.session_state[f"{session_key}_last_components"] = {
+                    'role': selected_roles,
+                    'goal': expanded_goal,
+                    'context': expanded_contexts,
+                    'document': selected_document,
+                    'output': enhanced_output,
+                    'rule': expanded_rules
+                }
+
                 # 프롬프트 표시
                 st.code(generated_prompt, language="text")
 
                 # 복사 안내 메시지
                 st.caption("💡 위 코드 블록 오른쪽 상단의 복사 아이콘(📋)을 클릭하여 클립보드에 복사할 수 있습니다")
 
-                # 다운로드 버튼
-                st.download_button(
-                    label="💾 텍스트 파일로 저장",
-                    data=generated_prompt,
-                    file_name=f"prompt_{int(time.time())}.txt",
-                    mime="text/plain",
-                    type="primary",
-                    use_container_width=True
-                )
+                # 버튼 열 (다운로드 & 템플릿 저장)
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        label="💾 텍스트 파일로 저장",
+                        data=generated_prompt,
+                        file_name=f"prompt_{int(time.time())}.txt",
+                        mime="text/plain",
+                        type="primary",
+                        use_container_width=True
+                    )
+
+                with col2:
+                    if st.button(
+                        "📁 템플릿으로 저장",
+                        type="secondary",
+                        use_container_width=True,
+                        key=f"{domain}_save_template_button"
+                    ):
+                        st.session_state[f"{session_key}_show_save_dialog"] = True
+                        st.rerun()
 
             except Exception as e:
                 st.error(f"❌ 프롬프트 생성 오류: {e}")
                 import traceback
                 with st.expander("🔍 상세 오류 정보"):
                     st.code(traceback.format_exc())
+
+    # 템플릿 저장 다이얼로그 표시
+    if st.session_state[f"{session_key}_show_save_dialog"]:
+        render_save_template_dialog(domain, session_key)
 
 
 def main():
@@ -490,6 +650,9 @@ def main():
 
     # 헤더
     render_header()
+
+    # localStorage 브릿지 초기화
+    TemplateStorageManager.initialize()
 
     # 탭 생성 (도메인별 프롬프트 생성 탭 추가)
     tab1, tab2, tab3, tab4 = st.tabs([
