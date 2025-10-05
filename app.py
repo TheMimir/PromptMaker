@@ -209,11 +209,12 @@ def render_prompt_generator(domain: str = "game_dev"):
             selected_category = st.selectbox(
                 "📊 출력 형식 카테고리",
                 options=category_keys,
-                format_func=lambda x: "📋 출력 형식을 선택하세요" if x == "" else category_options[x],
-                key=f"{domain}_category_select"
+                format_func=lambda x: "⬇️ 먼저 카테고리를 선택하세요" if x == "" else category_options[x],
+                key=f"{domain}_category_select",
+                help="출력 형식의 카테고리를 먼저 선택하세요"
             )
 
-            # 세부 형식 선택 (카테고리 선택 시에만 활성화)
+            # 세부 형식 선택 (항상 렌더링, 카테고리 선택 여부에 따라 활성화)
             selected_format = None
             selected_output = "보고서 형식"
             template_instruction = ""
@@ -232,7 +233,8 @@ def render_prompt_generator(domain: str = "game_dev"):
                         "📝 세부 형식",
                         options=list(format_options.keys()),
                         format_func=lambda x: format_options[x],
-                        key=f"{domain}_format_select"
+                        key=f"{domain}_format_select",
+                        help="원하는 출력 형식을 선택하세요"
                     )
 
                     # 선택된 포맷 정보 표시
@@ -247,9 +249,25 @@ def render_prompt_generator(domain: str = "game_dev"):
                         selected_output = format_data.get('name', '보고서 형식')
                         template_instruction = format_data.get('template', '')
                 else:
+                    # 카테고리가 선택되었지만 포맷이 없는 경우
+                    selected_format = st.selectbox(
+                        "📝 세부 형식",
+                        options=["_no_formats_"],
+                        format_func=lambda x: "⚠️ 해당 카테고리에 사용 가능한 형식이 없습니다",
+                        disabled=True,
+                        key=f"{domain}_format_select"
+                    )
                     st.warning("⚠️ 해당 카테고리에 사용 가능한 형식이 없습니다.")
             else:
-                st.info("💡 먼저 출력 형식 카테고리를 선택하세요")
+                # 카테고리가 선택되지 않은 경우 - 비활성화된 placeholder selectbox
+                selected_format = st.selectbox(
+                    "📝 세부 형식",
+                    options=["_placeholder_"],
+                    format_func=lambda x: "⬆️ 먼저 카테고리를 선택하세요",
+                    disabled=True,
+                    key=f"{domain}_format_select",
+                    help="카테고리를 먼저 선택하면 세부 형식을 선택할 수 있습니다"
+                )
 
         except Exception as e:
             st.error(f"출력 형식 로드 실패: {e}")
@@ -269,61 +287,67 @@ def render_prompt_generator(domain: str = "game_dev"):
 
     # 프롬프트 생성
     if submitted:
-        try:
-            # Goal expansion 적용
-            expanded_goal = goal_expansions.get(selected_goal, selected_goal)
+        # 입력 검증
+        if not selected_category or selected_category == "":
+            st.error("❌ 출력 형식 카테고리를 선택하세요")
+        elif not selected_format or selected_format in ["_placeholder_", "_no_formats_"]:
+            st.error("❌ 세부 출력 형식을 선택하세요")
+        else:
+            try:
+                # Goal expansion 적용
+                expanded_goal = goal_expansions.get(selected_goal, selected_goal)
 
-            # Context expansion 적용
-            expanded_contexts = [
-                context_expansions.get(ctx, ctx) for ctx in selected_contexts
-            ]
+                # Context expansion 적용
+                expanded_contexts = [
+                    context_expansions.get(ctx, ctx) for ctx in selected_contexts
+                ]
 
-            # Rule expansion 적용
-            expanded_rules = [
-                rule_expansions.get(rule, rule) for rule in selected_rules
-            ]
+                # Rule expansion 적용
+                expanded_rules = [
+                    rule_expansions.get(rule, rule) for rule in selected_rules
+                ]
 
-            # Enhanced output with template
-            enhanced_output = selected_output
-            if template_instruction:
-                if selected_output:
-                    enhanced_output = f"{selected_output}\n\n{template_instruction}"
-                else:
-                    enhanced_output = template_instruction
+                # Enhanced output with template
+                enhanced_output = selected_output
+                if template_instruction:
+                    if selected_output:
+                        enhanced_output = f"{selected_output}\n\n{template_instruction}"
+                    else:
+                        enhanced_output = template_instruction
 
-            components = PromptComponent(
-                role=selected_roles,
-                goal=expanded_goal,
-                context=expanded_contexts,
-                document=selected_document,
-                output=enhanced_output,
-                rule=expanded_rules
-            )
+                components = PromptComponent(
+                    role=selected_roles,
+                    goal=expanded_goal,
+                    context=expanded_contexts,
+                    document=selected_document,
+                    output=enhanced_output,
+                    rule=expanded_rules
+                )
 
-            generated_prompt = service.generate_prompt(components)
-            st.session_state[f"{session_key}_last_generated_prompt"] = generated_prompt
+                generated_prompt = service.generate_prompt(components)
+                st.session_state[f"{session_key}_last_generated_prompt"] = generated_prompt
 
-            # 프롬프트 표시
-            st.code(generated_prompt, language="text")
+                # 프롬프트 표시
+                st.code(generated_prompt, language="text")
 
-            # 복사 안내 메시지
-            st.caption("💡 위 코드 블록 오른쪽 상단의 복사 아이콘(📋)을 클릭하여 클립보드에 복사할 수 있습니다")
+                # 복사 안내 메시지
+                st.caption("💡 위 코드 블록 오른쪽 상단의 복사 아이콘(📋)을 클릭하여 클립보드에 복사할 수 있습니다")
 
-            # 다운로드 버튼
-            st.download_button(
-                label="💾 텍스트 파일로 저장",
-                data=generated_prompt,
-                file_name=f"prompt_{int(time.time())}.txt",
-                mime="text/plain",
-                type="primary",
-                use_container_width=True
-            )
+                # 다운로드 버튼
+                st.download_button(
+                    label="💾 텍스트 파일로 저장",
+                    data=generated_prompt,
+                    file_name=f"prompt_{int(time.time())}.txt",
+                    mime="text/plain",
+                    type="primary",
+                    use_container_width=True
+                )
 
-        except Exception as e:
-            st.error(f"❌ 프롬프트 생성 오류: {e}")
-            import traceback
-            with st.expander("🔍 상세 오류 정보"):
-                st.code(traceback.format_exc())
+            except Exception as e:
+                st.error(f"❌ 프롬프트 생성 오류: {e}")
+                import traceback
+                with st.expander("🔍 상세 오류 정보"):
+                    st.code(traceback.format_exc())
 
 
 def main():
