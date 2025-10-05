@@ -237,7 +237,7 @@ def render_prompt_generator(domain: str = "game_dev"):
         st.info("💡 아래에서 출력 형식을 선택한 후 '프롬프트 생성' 버튼을 클릭하세요")
 
         # 폼 submit 버튼
-        form_submitted = st.form_submit_button("✅ 항목 적용", type="secondary", use_container_width=True)
+        form_submitted = st.form_submit_button("✅ 항목 적용", type="primary", use_container_width=True)
 
     # ═══════════════════════════════════════════════════════════
     # 출력 형식 설정 섹션 (폼 외부 - 즉시 반응형 동작)
