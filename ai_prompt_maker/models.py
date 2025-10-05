@@ -43,7 +43,7 @@ class PromptComponent:
     MAX_DOCUMENT_LENGTH = 10_000
     MAX_OUTPUT_LENGTH = 1_000
     MAX_LIST_ITEMS = 10  # Increased from 5 to 10 for more flexibility
-    MAX_ITEM_LENGTH = 200
+    MAX_ITEM_LENGTH = 500  # Increased from 200 to 500 for longer descriptions
 
     @staticmethod
     def _sanitize_string(value: str, max_length: int, field_name: str = "Field") -> str:
@@ -323,17 +323,17 @@ class PromptTemplate:
                                 "role": {
                                     "type": "array",
                                     "maxItems": 10,
-                                    "items": {"type": "string", "maxLength": 200}
+                                    "items": {"type": "string", "maxLength": 500}
                                 },
                                 "context": {
                                     "type": "array",
                                     "maxItems": 10,
-                                    "items": {"type": "string", "maxLength": 200}
+                                    "items": {"type": "string", "maxLength": 500}
                                 },
                                 "rule": {
                                     "type": "array",
                                     "maxItems": 10,
-                                    "items": {"type": "string", "maxLength": 200}
+                                    "items": {"type": "string", "maxLength": 500}
                                 }
                             }
                         }
