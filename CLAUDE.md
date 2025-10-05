@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Primary Language**: Korean (UI, documentation, and configuration)
 **Tech Stack**: Python 3.8+, Streamlit 1.28+, pandas, pyperclip
+**Version**: 3.0.0 (with multi-domain support)
 
 ## Quick Start Commands
 
@@ -40,13 +41,14 @@ The application follows a three-layer architecture:
    - `prompt_generator.py`: Core engine that generates structured prompts from components
    - `models.py`: Data models (PromptComponent, PromptTemplate, PromptVersion, PromptCategory)
 
-2. **UI Layer** (`app.py`, `components/`)
+2. **UI Layer** (`app.py`, `components/`, `utils/`)
    - `app.py`: Main Streamlit application with three tabs (Generator, Template Manager, Editor)
    - `components/template_manager.py`: UI for browsing, filtering, and managing saved templates
    - `components/prompt_editor.py`: Advanced editor with version control and component/text editing modes
+   - `utils/data_handler.py`: Wrapper around PromptMakerService for UI components, provides simplified interface for template operations
 
 3. **Data Layer** (`data/`)
-   - `config.json`: Keywords library with expansions for role, goal, context, output, and rule
+   - `config.json`: Multi-domain configuration (v3.0.0) with domain-specific keywords and expansions
    - `output_formats.json`: Output format templates (20+ formats: tables, lists, reports, Q&A, guides)
    - `ai_prompt_maker/templates/`: Stored prompt templates (JSON files)
 
@@ -86,14 +88,39 @@ Generated prompts follow this XML-like structure:
 - Templates are categorized: 기획, 프로그램, 아트, QA, 전체
 - Templates stored as JSON files in `ai_prompt_maker/templates/` with UUID filenames
 
-### Keyword Expansion System
+### Multi-Domain Configuration System (v3.0.0)
 
-The configuration supports "expansions" for:
-- `goal_expansions`: Short keywords expand to detailed goal descriptions (100+ chars)
-- `context_expansions`: Short keywords expand to rich contextual scenarios
-- `rule_expansions`: Short keywords expand to comprehensive rule definitions
+The configuration now supports multiple domains, each with independent keywords and expansions:
 
-This allows users to select simple keywords in the UI while generating detailed, structured prompts.
+**Supported Domains:**
+- `game_dev`: Game development (planning, programming, art, QA)
+- `software_dev`: General software development
+- `uiux`: UI/UX design
+
+**Domain Structure:**
+```json
+{
+  "domains": {
+    "domain_name": {
+      "name": "Display name",
+      "description": "Domain description",
+      "icon": "emoji",
+      "enabled": true/false,
+      "keywords": { /* role, goal, context, output, rule */ },
+      "goal_expansions": { /* detailed expansions */ },
+      "context_expansions": { /* scenario expansions */ },
+      "rule_expansions": { /* rule definitions */ }
+    }
+  }
+}
+```
+
+**Expansion System:**
+- `goal_expansions`: Short keywords (e.g., "기능 분석") expand to detailed goal descriptions (300-500 chars)
+- `context_expansions`: Keywords (e.g., "신규 기능 개발") expand to rich contextual scenarios with constraints and metrics
+- `rule_expansions`: Keywords (e.g., "상세 분석 필수") expand to comprehensive rule definitions with specific requirements
+
+This allows users to select simple keywords in the UI while generating detailed, domain-specific structured prompts.
 
 ## Key Design Patterns
 
@@ -117,8 +144,10 @@ This allows users to select simple keywords in the UI while generating detailed,
 ## File Locations
 
 ### Configuration Files
-- `data/config.json`: Keywords and expansions
+- `data/config.json`: Multi-domain keywords and expansions (v3.0.0+)
+- `data/config.backup.json`: Backup of previous config version
 - `data/output_formats.json`: Output format templates with categories
+- `data/output_formats.backup.json`: Backup of output formats
 - Template storage: `ai_prompt_maker/templates/{uuid}.json`
 - Template backups: `ai_prompt_maker/templates/backup/`
 
@@ -127,13 +156,15 @@ This allows users to select simple keywords in the UI while generating detailed,
 - Core logic: `ai_prompt_maker/service.py`, `ai_prompt_maker/prompt_generator.py`
 - Data models: `ai_prompt_maker/models.py`
 - UI components: `components/template_manager.py`, `components/prompt_editor.py`
+- Data utilities: `utils/data_handler.py` (UI-friendly wrapper for PromptMakerService)
 
 ## Development Notes
 
 ### Version Management
-- Current version: 2.3.0
-- Config version: 2.2.0
+- Application version: 2.3.0
+- Config version: 3.0.0 (multi-domain support)
 - Version stored in config.json and displayed in UI footer
+- Breaking change in v3.0: Migrated from flat keywords structure to domain-based organization
 
 ### Output Formats
 - 20+ predefined formats organized in categories:
@@ -183,3 +214,5 @@ All UI text, messages, and documentation are in Korean. When modifying:
 - Keep English for code identifiers, function names, comments
 - Config keywords use Korean terms (게임 기획자, 기능 분석, etc.)
 - Error messages should be in Korean for end users
+- Domain names and descriptions in config.json are in Korean
+- Expansion texts are comprehensive Korean descriptions (300-500 chars)
