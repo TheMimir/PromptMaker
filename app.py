@@ -170,11 +170,7 @@ def render_prompt_generator(domain: str = "game_dev"):
         context_expansions = {}
         rule_expansions = {}
 
-    # ═══════════════════════════════════════════════════════════
-    # 출력 형식 설정 섹션 (폼 외부 - 즉시 반응형 동작)
-    # ═══════════════════════════════════════════════════════════
-
-    # 출력 형식 데이터 로드 (session state에 캐싱)
+    # 출력 형식 데이터 로드 (session state에 캐싱) - 나중에 사용
     try:
         if st.session_state[session_key_formats_data] is None:
             st.session_state[session_key_formats_data] = service.load_output_formats()
@@ -186,6 +182,62 @@ def render_prompt_generator(domain: str = "game_dev"):
         st.error(f"출력 형식 로드 실패: {e}")
         categories = {}
         formats = {}
+
+    # ═══════════════════════════════════════════════════════════
+    # 프롬프트 입력 폼 (role, goal, context, document, rules)
+    # ═══════════════════════════════════════════════════════════
+    with st.form(f"{domain}_prompt_form", border=False):
+        # 역할 입력 (다중 선택)
+        role_options = keywords.get('role', [])
+        selected_roles = st.multiselect(
+            "👤 역할 (Role)",
+            options=role_options,
+            help="AI가 수행할 역할을 선택하세요 (여러 개 선택 가능)",
+            key=f"{domain}_role_widget"
+        )
+
+        # 목표 입력 (단일 선택)
+        goal_options = keywords.get('goal', [])
+        selected_goal = st.selectbox(
+            "🎯 목표 (Goal) *",
+            options=goal_options,
+            help="달성하고자 하는 목표를 선택하세요",
+            key=f"{domain}_goal_widget"
+        )
+
+        # 컨텍스트 입력 (다중 선택)
+        context_options = keywords.get('context', [])
+        selected_contexts = st.multiselect(
+            "📋 컨텍스트 (Context)",
+            options=context_options,
+            help="상황 설명 및 배경 정보를 선택하세요 (여러 개 선택 가능)",
+            key=f"{domain}_context_widget"
+        )
+
+        # 문서/데이터 입력 (자유 입력)
+        selected_document = st.text_area(
+            "📄 문서/데이터 (Document)",
+            placeholder="예: [아이템 스탯 테이블]\n이름: 화염검\n공격력: 150\n...",
+            help="게임 디자인 문서의 관련 부분을 붙여넣으세요",
+            height=150,
+            key=f"{domain}_document_widget"
+        )
+
+        # 규칙 입력 (다중 선택)
+        rule_options = keywords.get('rule', [])
+        selected_rules = st.multiselect(
+            "📏 규칙 (Rules)",
+            options=rule_options,
+            help="AI가 따라야 할 규칙이나 제약사항을 선택하세요 (여러 개 선택 가능)",
+            key=f"{domain}_rules_widget"
+        )
+
+    # ═══════════════════════════════════════════════════════════
+    # 출력 형식 설정 섹션 (폼 외부 - 즉시 반응형 동작)
+    # ═══════════════════════════════════════════════════════════
+
+    # 시각적 구분선
+    st.divider()
 
     # 출력 형식 섹션 시작
     with st.container():
@@ -266,52 +318,25 @@ def render_prompt_generator(domain: str = "game_dev"):
     # 시각적 구분선
     st.divider()
 
-    with st.form(f"{domain}_prompt_form"):
-        # 역할 입력 (다중 선택)
-        role_options = keywords.get('role', [])
-        selected_roles = st.multiselect(
-            "👤 역할 (Role)",
-            options=role_options,
-            help="AI가 수행할 역할을 선택하세요 (여러 개 선택 가능)"
-        )
-
-        # 목표 입력 (단일 선택)
-        goal_options = keywords.get('goal', [])
-        selected_goal = st.selectbox(
-            "🎯 목표 (Goal) *",
-            options=goal_options,
-            help="달성하고자 하는 목표를 선택하세요"
-        )
-
-        # 컨텍스트 입력 (다중 선택)
-        context_options = keywords.get('context', [])
-        selected_contexts = st.multiselect(
-            "📋 컨텍스트 (Context)",
-            options=context_options,
-            help="상황 설명 및 배경 정보를 선택하세요 (여러 개 선택 가능)"
-        )
-
-        # 문서/데이터 입력 (자유 입력)
-        selected_document = st.text_area(
-            "📄 문서/데이터 (Document)",
-            placeholder="예: [아이템 스탯 테이블]\n이름: 화염검\n공격력: 150\n...",
-            help="게임 디자인 문서의 관련 부분을 붙여넣으세요",
-            height=150
-        )
-
-        # 규칙 입력 (다중 선택)
-        rule_options = keywords.get('rule', [])
-        selected_rules = st.multiselect(
-            "📏 규칙 (Rules)",
-            options=rule_options,
-            help="AI가 따라야 할 규칙이나 제약사항을 선택하세요 (여러 개 선택 가능)"
-        )
-
-        # 생성 버튼
-        submitted = st.form_submit_button("✨ 프롬프트 생성", type="primary", use_container_width=True)
+    # ═══════════════════════════════════════════════════════════
+    # 프롬프트 생성 버튼 (폼 외부)
+    # ═══════════════════════════════════════════════════════════
+    submitted = st.button(
+        "✨ 프롬프트 생성",
+        type="primary",
+        use_container_width=True,
+        key=f"{domain}_generate_button"
+    )
 
     # 프롬프트 생성
     if submitted:
+        # Session state에서 폼 입력값 읽기
+        selected_roles = st.session_state.get(f"{domain}_role_widget", [])
+        selected_goal = st.session_state.get(f"{domain}_goal_widget", "")
+        selected_contexts = st.session_state.get(f"{domain}_context_widget", [])
+        selected_document = st.session_state.get(f"{domain}_document_widget", "")
+        selected_rules = st.session_state.get(f"{domain}_rules_widget", [])
+
         # 입력 검증: session state에서 출력 형식 확인
         validation_errors = []
 
