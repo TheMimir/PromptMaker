@@ -160,6 +160,33 @@ def render_prompt_generator(domain: str = "game_dev"):
         context_expansions = {}
         rule_expansions = {}
 
+    # 출력 형식 카테고리 선택 (폼 외부 - 즉시 반응형 동작)
+    try:
+        formats_data = service.load_output_formats()
+        categories = formats_data.get('categories', {})
+        formats = formats_data.get('formats', {})
+
+        # 카테고리 선택 (빈 옵션 포함)
+        category_options = {cat_id: cat_data['name']
+                          for cat_id, cat_data in categories.items()}
+
+        # 빈 옵션을 첫 번째로 추가
+        category_keys = [""] + list(category_options.keys())
+
+        selected_category = st.selectbox(
+            "📊 출력 형식 카테고리",
+            options=category_keys,
+            format_func=lambda x: "⬇️ 먼저 카테고리를 선택하세요" if x == "" else category_options[x],
+            key=f"{domain}_category_select",
+            help="출력 형식의 카테고리를 먼저 선택하세요"
+        )
+    except Exception as e:
+        st.error(f"출력 형식 로드 실패: {e}")
+        selected_category = ""
+        formats_data = {}
+        categories = {}
+        formats = {}
+
     with st.form(f"{domain}_prompt_form"):
         # 역할 입력 (다중 선택)
         role_options = keywords.get('role', [])
@@ -193,86 +220,46 @@ def render_prompt_generator(domain: str = "game_dev"):
             height=150
         )
 
-        # 출력 형식 선택
-        try:
-            formats_data = service.load_output_formats()
-            categories = formats_data.get('categories', {})
-            formats = formats_data.get('formats', {})
+        # 세부 출력 형식 선택 (카테고리 선택에 따라 동적으로 표시)
+        selected_format = None
+        selected_output = "보고서 형식"
+        template_instruction = ""
 
-            # 카테고리 선택 (빈 옵션 포함)
-            category_options = {cat_id: cat_data['name']
-                              for cat_id, cat_data in categories.items()}
+        if selected_category:
+            # 해당 카테고리의 포맷 선택
+            category_formats = {fmt_id: fmt_data
+                               for fmt_id, fmt_data in formats.items()
+                               if fmt_data.get('category') == selected_category}
 
-            # 빈 옵션을 첫 번째로 추가
-            category_keys = [""] + list(category_options.keys())
+            if category_formats:
+                format_options = {fmt_id: fmt_data['name']
+                                for fmt_id, fmt_data in category_formats.items()}
 
-            selected_category = st.selectbox(
-                "📊 출력 형식 카테고리",
-                options=category_keys,
-                format_func=lambda x: "⬇️ 먼저 카테고리를 선택하세요" if x == "" else category_options[x],
-                key=f"{domain}_category_select",
-                help="출력 형식의 카테고리를 먼저 선택하세요"
-            )
-
-            # 세부 형식 선택 (항상 렌더링, 카테고리 선택 여부에 따라 활성화)
-            selected_format = None
-            selected_output = "보고서 형식"
-            template_instruction = ""
-
-            if selected_category:
-                # 해당 카테고리의 포맷 선택
-                category_formats = {fmt_id: fmt_data
-                                   for fmt_id, fmt_data in formats.items()
-                                   if fmt_data.get('category') == selected_category}
-
-                if category_formats:
-                    format_options = {fmt_id: fmt_data['name']
-                                    for fmt_id, fmt_data in category_formats.items()}
-
-                    selected_format = st.selectbox(
-                        "📝 세부 형식",
-                        options=list(format_options.keys()),
-                        format_func=lambda x: format_options[x],
-                        key=f"{domain}_format_select",
-                        help="원하는 출력 형식을 선택하세요"
-                    )
-
-                    # 선택된 포맷 정보 표시
-                    if selected_format:
-                        format_data = formats[selected_format]
-                        with st.expander("ℹ️ 형식 정보", expanded=False):
-                            st.write(f"**설명:** {format_data['description']}")
-                            if format_data.get('example_output'):
-                                st.markdown("**예시 출력:**")
-                                st.code(format_data['example_output'], language="text")
-
-                        selected_output = format_data.get('name', '보고서 형식')
-                        template_instruction = format_data.get('template', '')
-                else:
-                    # 카테고리가 선택되었지만 포맷이 없는 경우
-                    selected_format = st.selectbox(
-                        "📝 세부 형식",
-                        options=["_no_formats_"],
-                        format_func=lambda x: "⚠️ 해당 카테고리에 사용 가능한 형식이 없습니다",
-                        disabled=True,
-                        key=f"{domain}_format_select"
-                    )
-                    st.warning("⚠️ 해당 카테고리에 사용 가능한 형식이 없습니다.")
-            else:
-                # 카테고리가 선택되지 않은 경우 - 비활성화된 placeholder selectbox
                 selected_format = st.selectbox(
-                    "📝 세부 형식",
-                    options=["_placeholder_"],
-                    format_func=lambda x: "⬆️ 먼저 카테고리를 선택하세요",
-                    disabled=True,
+                    "📝 세부 형식 *",
+                    options=list(format_options.keys()),
+                    format_func=lambda x: format_options[x],
                     key=f"{domain}_format_select",
-                    help="카테고리를 먼저 선택하면 세부 형식을 선택할 수 있습니다"
+                    help="원하는 출력 형식을 선택하세요"
                 )
 
-        except Exception as e:
-            st.error(f"출력 형식 로드 실패: {e}")
-            selected_output = "보고서 형식"
-            template_instruction = ""
+                # 선택된 포맷 정보 표시
+                if selected_format:
+                    format_data = formats[selected_format]
+                    with st.expander("ℹ️ 형식 정보", expanded=False):
+                        st.write(f"**설명:** {format_data['description']}")
+                        if format_data.get('example_output'):
+                            st.markdown("**예시 출력:**")
+                            st.code(format_data['example_output'], language="text")
+
+                    selected_output = format_data.get('name', '보고서 형식')
+                    template_instruction = format_data.get('template', '')
+            else:
+                # 카테고리가 선택되었지만 포맷이 없는 경우
+                st.warning("⚠️ 해당 카테고리에 사용 가능한 형식이 없습니다.")
+        else:
+            # 카테고리가 선택되지 않은 경우
+            st.info("⬆️ 먼저 위에서 출력 형식 카테고리를 선택하세요")
 
         # 규칙 입력 (다중 선택)
         rule_options = keywords.get('rule', [])
@@ -290,7 +277,7 @@ def render_prompt_generator(domain: str = "game_dev"):
         # 입력 검증
         if not selected_category or selected_category == "":
             st.error("❌ 출력 형식 카테고리를 선택하세요")
-        elif not selected_format or selected_format in ["_placeholder_", "_no_formats_"]:
+        elif not selected_format:
             st.error("❌ 세부 출력 형식을 선택하세요")
         else:
             try:
