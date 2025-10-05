@@ -6,6 +6,7 @@ AI Prompt Maker 데이터 모델
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 import json
+import re
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -22,7 +23,7 @@ class PromptCategory(Enum):
 
 @dataclass
 class PromptComponent:
-    """프롬프트 구성 요소"""
+    """프롬프트 구성 요소 (with enhanced security validation)"""
     role: List[str] = field(default_factory=list)
     goal: str = ""
     context: List[str] = field(default_factory=list)
@@ -30,21 +31,140 @@ class PromptComponent:
     output: str = ""
     rule: List[str] = field(default_factory=list)
 
+    # Validation constants
+    MAX_GOAL_LENGTH = 500
+    MAX_DOCUMENT_LENGTH = 10_000
+    MAX_OUTPUT_LENGTH = 1_000
+    MAX_LIST_ITEMS = 5
+    MAX_ITEM_LENGTH = 200
+
+    @staticmethod
+    def _sanitize_string(value: str, max_length: int, field_name: str = "Field") -> str:
+        """Sanitize and validate string input
+
+        Args:
+            value: String to sanitize
+            max_length: Maximum allowed length
+            field_name: Field name for error messages
+
+        Returns:
+            Sanitized string
+
+        Raises:
+            ValueError: If validation fails
+        """
+        if not isinstance(value, str):
+            raise ValueError(f"{field_name}: Expected string, got {type(value)}")
+
+        # Remove whitespace
+        value = value.strip()
+
+        # Check length
+        if len(value) > max_length:
+            raise ValueError(
+                f"{field_name}: Input too long ({len(value)} > {max_length} characters)"
+            )
+
+        # Check for potentially dangerous patterns (defense in depth)
+        dangerous_patterns = [
+            (r'<script[^>]*>.*?</script>', 'Script tags'),
+            (r'javascript:', 'JavaScript protocol'),
+            (r'on\w+\s*=', 'Event handlers'),
+            (r'<iframe[^>]*>', 'Iframe tags'),
+        ]
+
+        for pattern, pattern_name in dangerous_patterns:
+            if re.search(pattern, value, re.IGNORECASE | re.DOTALL):
+                raise ValueError(f"{field_name}: Potentially malicious content detected ({pattern_name})")
+
+        return value
+
+    @staticmethod
+    def _sanitize_list(items: List[str], max_items: int, max_item_length: int,
+                      field_name: str = "Field") -> List[str]:
+        """Sanitize and validate list input
+
+        Args:
+            items: List to sanitize
+            max_items: Maximum number of items
+            max_item_length: Maximum length per item
+            field_name: Field name for error messages
+
+        Returns:
+            Sanitized list
+
+        Raises:
+            ValueError: If validation fails
+        """
+        if not isinstance(items, list):
+            raise ValueError(f"{field_name}: Expected list, got {type(items)}")
+
+        if len(items) > max_items:
+            raise ValueError(
+                f"{field_name}: Too many items ({len(items)} > {max_items})"
+            )
+
+        sanitized = []
+        for i, item in enumerate(items):
+            if not isinstance(item, str):
+                raise ValueError(
+                    f"{field_name}[{i}]: Expected string, got {type(item)}"
+                )
+
+            item = item.strip()
+            if item:  # Only add non-empty items
+                try:
+                    sanitized.append(
+                        PromptComponent._sanitize_string(
+                            item, max_item_length, f"{field_name}[{i}]"
+                        )
+                    )
+                except ValueError as e:
+                    raise ValueError(f"{field_name}[{i}]: {e}")
+
+        return sanitized
+
     def __post_init__(self):
-        """데이터 유효성 검사"""
-        # goal은 필수 항목
-        if not self.goal or not self.goal.strip():
+        """데이터 유효성 검사 (enhanced with security validation)"""
+        # Validate goal (required field)
+        if not self.goal or not isinstance(self.goal, str) or not self.goal.strip():
             raise ValueError("Goal은 필수 항목입니다")
 
-        # 문자열 정리
-        self.goal = self.goal.strip()
-        self.document = self.document.strip() if self.document else ""
-        self.output = self.output.strip() if self.output else ""
+        try:
+            # Sanitize and validate goal
+            self.goal = self._sanitize_string(
+                self.goal, self.MAX_GOAL_LENGTH, "Goal"
+            )
 
-        # 리스트 요소들 정리
-        self.role = [role.strip() for role in self.role if role.strip()]
-        self.context = [ctx.strip() for ctx in self.context if ctx.strip()]
-        self.rule = [rule.strip() for rule in self.rule if rule.strip()]
+            # Sanitize optional string fields
+            if self.document:
+                self.document = self._sanitize_string(
+                    self.document, self.MAX_DOCUMENT_LENGTH, "Document"
+                )
+            else:
+                self.document = ""
+
+            if self.output:
+                self.output = self._sanitize_string(
+                    self.output, self.MAX_OUTPUT_LENGTH, "Output"
+                )
+            else:
+                self.output = ""
+
+            # Sanitize list fields
+            self.role = self._sanitize_list(
+                self.role, self.MAX_LIST_ITEMS, self.MAX_ITEM_LENGTH, "Role"
+            )
+            self.context = self._sanitize_list(
+                self.context, self.MAX_LIST_ITEMS, self.MAX_ITEM_LENGTH, "Context"
+            )
+            self.rule = self._sanitize_list(
+                self.rule, self.MAX_LIST_ITEMS, self.MAX_ITEM_LENGTH, "Rule"
+            )
+
+        except ValueError as e:
+            # Re-raise with clear error message
+            raise ValueError(f"PromptComponent validation failed: {e}")
 
     def to_dict(self) -> Dict[str, Any]:
         """딕셔너리로 변환"""

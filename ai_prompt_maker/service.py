@@ -5,6 +5,7 @@ Prompt Maker Service
 """
 import json
 import os
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
@@ -56,6 +57,58 @@ class PromptMakerService:
         # 초기 설정
         self._ensure_config_exists()
         self._load_templates_cache()
+
+    def _sanitize_template_id(self, template_id: str) -> str:
+        """Sanitize template ID to prevent path traversal attacks
+
+        Args:
+            template_id: Template ID to sanitize
+
+        Returns:
+            Sanitized template ID
+
+        Raises:
+            ValueError: If template ID contains invalid characters
+        """
+        if not template_id or not isinstance(template_id, str):
+            raise ValueError(f"Invalid template ID type: {type(template_id)}")
+
+        # Remove whitespace
+        template_id = template_id.strip()
+
+        # Allow only alphanumeric, hyphens, and underscores (UUID format)
+        if not re.match(r'^[a-zA-Z0-9_-]+$', template_id):
+            raise ValueError(
+                f"Invalid template ID: {template_id}. "
+                "Only alphanumeric characters, hyphens, and underscores are allowed."
+            )
+
+        # Additional length check (UUIDs are typically 36 chars with hyphens)
+        if len(template_id) > 100:
+            raise ValueError(f"Template ID too long: {len(template_id)} characters")
+
+        return template_id
+
+    def _validate_template_path(self, template_path: Path) -> None:
+        """Validate that template path is within templates directory
+
+        Args:
+            template_path: Path to validate
+
+        Raises:
+            ValueError: If path traversal is detected
+        """
+        try:
+            # Resolve to absolute path and check if it's within templates dir
+            resolved_template = template_path.resolve()
+            resolved_templates_dir = self.templates_dir.resolve()
+
+            if not resolved_template.is_relative_to(resolved_templates_dir):
+                raise ValueError(
+                    f"Path traversal detected: {template_path} is not within {self.templates_dir}"
+                )
+        except (ValueError, OSError) as e:
+            raise ValueError(f"Invalid template path: {e}")
 
     def _ensure_config_exists(self):
         """설정 파일 존재 확인 및 생성"""
@@ -300,9 +353,26 @@ class PromptMakerService:
             raise PromptValidationError(f"템플릿 생성 실패: {e}")
 
     def save_template(self, template: PromptTemplate, overwrite: bool = True) -> bool:
-        """템플릿 저장"""
+        """템플릿 저장
+
+        Args:
+            template: 저장할 템플릿
+            overwrite: 기존 파일 덮어쓰기 허용 여부
+
+        Returns:
+            저장 성공 여부
+
+        Raises:
+            ValueError: 잘못된 template ID
+            PromptValidationError: 저장 실패
+        """
         try:
-            template_path = self.templates_dir / f"{template.template_id}.json"
+            # Sanitize template ID to prevent path traversal
+            safe_id = self._sanitize_template_id(template.template_id)
+            template_path = self.templates_dir / f"{safe_id}.json"
+
+            # Additional path validation
+            self._validate_template_path(template_path)
 
             # 덮어쓰기 확인
             if not overwrite and template_path.exists():
@@ -326,19 +396,39 @@ class PromptMakerService:
 
             return True
 
+        except ValueError as e:
+            # Path traversal or invalid ID
+            raise ValueError(f"Invalid template ID: {e}")
         except Exception as e:
             raise PromptValidationError(f"템플릿 저장 실패: {e}")
 
     def load_template(self, template_id: str) -> Optional[PromptTemplate]:
-        """템플릿 로드"""
+        """템플릿 로드
+
+        Args:
+            template_id: 로드할 템플릿 ID
+
+        Returns:
+            템플릿 객체 또는 None (존재하지 않는 경우)
+
+        Raises:
+            ValueError: 잘못된 template ID
+        """
         try:
-            # 캐시 확인
-            if template_id in self._templates_cache:
+            # Sanitize template ID to prevent path traversal
+            safe_id = self._sanitize_template_id(template_id)
+
+            # 캐시 확인 (sanitized ID 사용)
+            if safe_id in self._templates_cache:
                 self.stats["templates_loaded"] += 1
-                return self._templates_cache[template_id]
+                return self._templates_cache[safe_id]
 
             # 파일에서 로드
-            template_path = self.templates_dir / f"{template_id}.json"
+            template_path = self.templates_dir / f"{safe_id}.json"
+
+            # Additional path validation
+            self._validate_template_path(template_path)
+
             if not template_path.exists():
                 return None
 
@@ -348,7 +438,7 @@ class PromptMakerService:
             template = PromptTemplate.from_json(template_data)
 
             # 캐시에 저장
-            self._templates_cache[template_id] = template
+            self._templates_cache[safe_id] = template
 
             # 통계 업데이트
             self.stats["templates_loaded"] += 1
@@ -356,6 +446,10 @@ class PromptMakerService:
 
             return template
 
+        except ValueError as e:
+            # Invalid template ID
+            print(f"Invalid template ID ({template_id}): {e}")
+            return None
         except Exception as e:
             print(f"템플릿 로드 실패 ({template_id}): {e}")
             return None
@@ -392,9 +486,24 @@ class PromptMakerService:
             return []
 
     def delete_template(self, template_id: str) -> bool:
-        """템플릿 삭제"""
+        """템플릿 삭제
+
+        Args:
+            template_id: 삭제할 템플릿 ID
+
+        Returns:
+            삭제 성공 여부
+
+        Raises:
+            ValueError: 잘못된 template ID
+        """
         try:
-            template_path = self.templates_dir / f"{template_id}.json"
+            # Sanitize template ID to prevent path traversal
+            safe_id = self._sanitize_template_id(template_id)
+            template_path = self.templates_dir / f"{safe_id}.json"
+
+            # Additional path validation
+            self._validate_template_path(template_path)
 
             if not template_path.exists():
                 return False
@@ -402,21 +511,33 @@ class PromptMakerService:
             # 백업 (선택적)
             backup_dir = self.templates_dir / "backup"
             backup_dir.mkdir(exist_ok=True)
-            backup_path = backup_dir / f"{template_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+            # Use sanitized ID for backup filename
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_path = backup_dir / f"{safe_id}_{timestamp}.json"
+
+            # Validate backup path as well
+            self._validate_template_path(backup_path)
+
+            # Atomic copy and delete
             shutil.copy2(template_path, backup_path)
 
             # 원본 파일 삭제
             template_path.unlink()
 
-            # 캐시에서 제거
-            self._templates_cache.pop(template_id, None)
+            # 캐시에서 제거 (sanitized ID 사용)
+            self._templates_cache.pop(safe_id, None)
 
             # 통계 업데이트
             self.stats["templates_deleted"] += 1
-            self.stats["last_operation"] = f"템플릿 삭제: {template_id}"
+            self.stats["last_operation"] = f"템플릿 삭제: {safe_id}"
 
             return True
 
+        except ValueError as e:
+            # Invalid template ID or path traversal
+            print(f"Invalid template ID ({template_id}): {e}")
+            return False
         except Exception as e:
             print(f"템플릿 삭제 실패 ({template_id}): {e}")
             return False
