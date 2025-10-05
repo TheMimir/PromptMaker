@@ -160,62 +160,6 @@ def render_prompt_generator(domain: str = "game_dev"):
         context_expansions = {}
         rule_expansions = {}
 
-    # ========================================
-    # PART 1: 출력 형식 카테고리 선택 (Form 외부 - 즉시 반응)
-    # ========================================
-    st.markdown("#### 📊 출력 형식 선택")
-
-    category_key = f"{domain}_output_category"
-
-    try:
-        formats_data = service.load_output_formats()
-        categories = formats_data.get('categories', {})
-        formats = formats_data.get('formats', {})
-
-        # 카테고리 선택 - FORM 외부에서 즉시 반응
-        category_options = {"": "📂 출력 형식을 선택하세요"}
-        category_options.update({
-            cat_id: cat_data['name']
-            for cat_id, cat_data in categories.items()
-        })
-
-        selected_category = st.selectbox(
-            "출력 형식 카테고리 *",
-            options=list(category_options.keys()),
-            format_func=lambda x: category_options[x],
-            help="출력 형식 카테고리를 먼저 선택하세요",
-            key=category_key  # session_state에 자동 저장
-        )
-
-        # 선택된 카테고리에 해당하는 형식만 필터링 (Form 전에 미리 처리)
-        category_formats = {}
-        if selected_category and selected_category != "":
-            category_formats = {
-                fmt_id: fmt_data
-                for fmt_id, fmt_data in formats.items()
-                if fmt_data.get('category') == selected_category
-            }
-
-            if category_formats:
-                st.success(f"✅ {len(category_formats)}개의 세부 형식을 사용할 수 있습니다")
-            else:
-                st.warning("⚠️ 이 카테고리에는 사용 가능한 형식이 없습니다")
-        else:
-            st.info("💡 출력 형식 카테고리를 선택하면 세부 형식을 선택할 수 있습니다")
-
-    except Exception as e:
-        st.error(f"출력 형식 로드 실패: {e}")
-        selected_category = ""
-        category_formats = {}
-        formats = {}
-
-    st.divider()
-
-    # ========================================
-    # PART 2: 프롬프트 구성 요소 입력 (Form 내부)
-    # ========================================
-    st.markdown("#### 📝 프롬프트 구성 요소")
-
     with st.form(f"{domain}_prompt_form"):
         # 역할 입력 (다중 선택)
         role_options = keywords.get('role', [])
@@ -249,57 +193,51 @@ def render_prompt_generator(domain: str = "game_dev"):
             height=150
         )
 
-        # 세부 형식 선택 - Form 내부 (이미 필터링된 category_formats 사용)
-        selected_format = None
-        format_data = None
-        selected_output = "보고서 형식"
-        template_instruction = ""
+        # 출력 형식 선택
+        try:
+            formats_data = service.load_output_formats()
+            categories = formats_data.get('categories', {})
+            formats = formats_data.get('formats', {})
 
-        if category_formats:
-            # 카테고리가 선택되고 형식이 있는 경우
-            format_options = {
-                fmt_id: fmt_data['name']
-                for fmt_id, fmt_data in category_formats.items()
-            }
+            # 카테고리 선택
+            category_options = {cat_id: cat_data['name']
+                              for cat_id, cat_data in categories.items()}
+            selected_category = st.selectbox(
+                "📊 출력 형식 카테고리",
+                options=list(category_options.keys()),
+                format_func=lambda x: category_options[x]
+            )
+
+            # 해당 카테고리의 포맷 선택
+            category_formats = {fmt_id: fmt_data
+                               for fmt_id, fmt_data in formats.items()
+                               if fmt_data.get('category') == selected_category}
+
+            format_options = {fmt_id: fmt_data['name']
+                            for fmt_id, fmt_data in category_formats.items()}
 
             selected_format = st.selectbox(
-                "📝 세부 형식 *",
+                "📝 세부 형식",
                 options=list(format_options.keys()),
-                format_func=lambda x: format_options[x],
-                help="선택한 카테고리의 세부 형식을 선택하세요",
-                key=f"{domain}_output_format"
+                format_func=lambda x: format_options[x]
             )
 
             # 선택된 포맷 정보 표시
             if selected_format:
-                format_data = formats.get(selected_format)
-                if format_data:
-                    with st.expander("ℹ️ 형식 정보", expanded=False):
-                        st.write(f"**설명:** {format_data['description']}")
-                        if format_data.get('example_output'):
-                            st.markdown("**예시 출력:**")
-                            st.code(format_data['example_output'], language="text")
+                format_data = formats[selected_format]
+                with st.expander("ℹ️ 형식 정보", expanded=False):
+                    st.write(f"**설명:** {format_data['description']}")
+                    if format_data.get('example_output'):
+                        st.markdown("**예시 출력:**")
+                        st.code(format_data['example_output'], language="text")
 
-                    selected_output = format_data.get('name', '보고서 형식')
-                    template_instruction = format_data.get('template', '')
+            selected_output = format_data.get('name', '보고서 형식')
+            template_instruction = format_data.get('template', '')
 
-        elif selected_category and selected_category != "":
-            # 카테고리는 선택되었지만 형식이 없는 경우
-            st.selectbox(
-                "📝 세부 형식",
-                options=[""],
-                format_func=lambda x: "⚠️ 사용 가능한 형식이 없습니다",
-                disabled=True
-            )
-        else:
-            # 카테고리가 선택되지 않은 경우
-            st.selectbox(
-                "📝 세부 형식",
-                options=[""],
-                format_func=lambda x: "⬆️ 먼저 출력 형식 카테고리를 선택하세요",
-                disabled=True,
-                help="출력 형식 카테고리를 먼저 선택하세요"
-            )
+        except Exception as e:
+            st.error(f"출력 형식 로드 실패: {e}")
+            selected_output = "보고서 형식"
+            template_instruction = ""
 
         # 규칙 입력 (다중 선택)
         rule_options = keywords.get('rule', [])
@@ -314,19 +252,6 @@ def render_prompt_generator(domain: str = "game_dev"):
 
     # 프롬프트 생성
     if submitted:
-        # 검증: 필수 항목 확인
-        if not selected_category or selected_category == "":
-            st.error("❌ 출력 형식 카테고리를 선택해주세요")
-            st.stop()
-
-        if not selected_format:
-            st.error("❌ 세부 형식을 선택해주세요")
-            st.stop()
-
-        if not selected_goal:
-            st.error("❌ 목표(Goal)는 필수 항목입니다")
-            st.stop()
-
         try:
             # Goal expansion 적용
             expanded_goal = goal_expansions.get(selected_goal, selected_goal)
