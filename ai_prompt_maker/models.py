@@ -284,14 +284,18 @@ class PromptTemplate:
         """템플릿 요약 정보"""
         current_version = self.get_current_version()
 
+        # datetime 객체를 ISO 형식 문자열로 변환
+        created_at = self.versions[0].created_at if self.versions else None
+        updated_at = current_version.created_at if current_version else None
+
         return {
             "template_id": self.template_id,
             "name": self.name,
             "category": self.category.value,
             "version_count": len(self.versions),
             "current_version": self.current_version,
-            "created_at": self.versions[0].created_at if self.versions else None,
-            "updated_at": current_version.created_at if current_version else None,
+            "created_at": created_at.isoformat() if created_at else None,
+            "updated_at": updated_at.isoformat() if updated_at else None,
             "tags": self.tags,
             "has_components": not current_version.components.is_empty() if current_version else False
         }

@@ -382,8 +382,8 @@ class PromptMakerService:
 
                     templates.append(template.get_summary())
 
-            # 업데이트 시간으로 정렬 (최신순)
-            templates.sort(key=lambda x: x.get("updated_at") or datetime.min, reverse=True)
+            # 업데이트 시간으로 정렬 (최신순) - ISO 형식 문자열 정렬
+            templates.sort(key=lambda x: x.get("updated_at") or "", reverse=True)
 
             return templates
 
