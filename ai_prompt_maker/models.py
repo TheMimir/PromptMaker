@@ -42,7 +42,7 @@ class PromptComponent:
     MAX_GOAL_LENGTH = 500
     MAX_DOCUMENT_LENGTH = 10_000
     MAX_OUTPUT_LENGTH = 1_000
-    MAX_LIST_ITEMS = 5
+    MAX_LIST_ITEMS = 10  # Increased from 5 to 10 for more flexibility
     MAX_ITEM_LENGTH = 200
 
     @staticmethod
@@ -204,14 +204,14 @@ class PromptComponent:
         if len(self.goal) > 500:
             return False, "Goal은 500자 이내여야 합니다"
 
-        if len(self.role) > 5:
-            return False, "Role은 최대 5개까지 선택 가능합니다"
+        if len(self.role) > 10:
+            return False, "Role은 최대 10개까지 선택 가능합니다"
 
-        if len(self.context) > 5:
-            return False, "Context는 최대 5개까지 선택 가능합니다"
+        if len(self.context) > 10:
+            return False, "Context는 최대 10개까지 선택 가능합니다"
 
-        if len(self.rule) > 5:
-            return False, "Rule은 최대 5개까지 선택 가능합니다"
+        if len(self.rule) > 10:
+            return False, "Rule은 최대 10개까지 선택 가능합니다"
 
         return True, ""
 
@@ -322,17 +322,17 @@ class PromptTemplate:
                                 "output": {"type": "string", "maxLength": 1000},
                                 "role": {
                                     "type": "array",
-                                    "maxItems": 5,
+                                    "maxItems": 10,
                                     "items": {"type": "string", "maxLength": 200}
                                 },
                                 "context": {
                                     "type": "array",
-                                    "maxItems": 5,
+                                    "maxItems": 10,
                                     "items": {"type": "string", "maxLength": 200}
                                 },
                                 "rule": {
                                     "type": "array",
-                                    "maxItems": 5,
+                                    "maxItems": 10,
                                     "items": {"type": "string", "maxLength": 200}
                                 }
                             }
