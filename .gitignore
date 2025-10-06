@@ -43,8 +43,12 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Template backups
+# Template backups and user-generated templates
 ai_prompt_maker/templates/backup/
+ai_prompt_maker/templates/*.json
+
+# Keep directory structure
+!ai_prompt_maker/templates/.gitkeep
 
 # Logs
 *.log
