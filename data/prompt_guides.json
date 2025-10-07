@@ -1,0 +1,608 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-01-08",
+  "providers": {
+    "anthropic": {
+      "name": "Anthropic (Claude)",
+      "icon": "🟣",
+      "color": "#7C3AED",
+      "resources": [
+        {
+          "id": "anthropic_overview",
+          "title": "Prompt Engineering Guide",
+          "title_kr": "프롬프트 엔지니어링 가이드",
+          "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "beginner_to_advanced",
+          "difficulty_kr": "초급~고급",
+          "description": "Anthropic's official prompt engineering documentation covering fundamental concepts, techniques, and best practices for working with Claude models.",
+          "description_kr": "Claude 모델 작업을 위한 기본 개념, 기법 및 모범 사례를 다루는 Anthropic의 공식 프롬프트 엔지니어링 문서입니다.",
+          "key_topics": [
+            "Prompt structure",
+            "System prompts",
+            "Few-shot examples",
+            "Chain-of-thought",
+            "XML tags"
+          ],
+          "key_topics_kr": [
+            "프롬프트 구조",
+            "시스템 프롬프트",
+            "퓨샷 예제",
+            "단계적 사고",
+            "XML 태그"
+          ]
+        },
+        {
+          "id": "anthropic_library",
+          "title": "Prompt Library",
+          "title_kr": "프롬프트 라이브러리",
+          "url": "https://docs.anthropic.com/en/prompt-library/library",
+          "type": "Examples",
+          "type_kr": "예제 모음",
+          "difficulty": "beginner_to_intermediate",
+          "difficulty_kr": "초급~중급",
+          "description": "Curated collection of ready-to-use prompts for common tasks, with explanations and variations.",
+          "description_kr": "일반적인 작업을 위한 즉시 사용 가능한 프롬프트 모음으로, 설명과 변형이 포함되어 있습니다.",
+          "key_topics": [
+            "Task-specific prompts",
+            "Templates",
+            "Real-world examples",
+            "Use case patterns"
+          ],
+          "key_topics_kr": [
+            "작업별 프롬프트",
+            "템플릿",
+            "실전 예제",
+            "사용 사례 패턴"
+          ]
+        },
+        {
+          "id": "anthropic_cookbook",
+          "title": "Claude Cookbook (GitHub)",
+          "title_kr": "Claude 쿡북 (GitHub)",
+          "url": "https://github.com/anthropics/anthropic-cookbook",
+          "type": "Cookbook",
+          "type_kr": "쿡북",
+          "difficulty": "intermediate_to_advanced",
+          "difficulty_kr": "중급~고급",
+          "description": "Collection of Jupyter notebooks with practical examples, advanced techniques, and integration patterns for Claude API.",
+          "description_kr": "Claude API를 위한 실전 예제, 고급 기법 및 통합 패턴이 포함된 Jupyter 노트북 모음입니다.",
+          "key_topics": [
+            "API integration",
+            "Advanced prompting",
+            "Multimodal prompts",
+            "Tool use",
+            "RAG patterns"
+          ],
+          "key_topics_kr": [
+            "API 통합",
+            "고급 프롬프팅",
+            "멀티모달 프롬프트",
+            "도구 사용",
+            "RAG 패턴"
+          ]
+        },
+        {
+          "id": "anthropic_system_prompts",
+          "title": "System Prompts Guide",
+          "title_kr": "시스템 프롬프트 가이드",
+          "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "intermediate",
+          "difficulty_kr": "중급",
+          "description": "Detailed documentation on using system prompts effectively to control Claude's behavior and set context.",
+          "description_kr": "Claude의 동작을 제어하고 컨텍스트를 설정하기 위한 시스템 프롬프트 효과적 사용법에 대한 상세 문서입니다.",
+          "key_topics": [
+            "System vs user messages",
+            "Role definition",
+            "Constraints",
+            "Output formatting"
+          ],
+          "key_topics_kr": [
+            "시스템 vs 사용자 메시지",
+            "역할 정의",
+            "제약 조건",
+            "출력 형식화"
+          ]
+        },
+        {
+          "id": "anthropic_tool_use",
+          "title": "Tool Use (Function Calling) Guide",
+          "title_kr": "도구 사용 (함수 호출) 가이드",
+          "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "advanced",
+          "difficulty_kr": "고급",
+          "description": "Official documentation on implementing tool use and function calling with Claude for agentic workflows.",
+          "description_kr": "에이전트 워크플로우를 위한 Claude의 도구 사용 및 함수 호출 구현에 대한 공식 문서입니다.",
+          "key_topics": [
+            "Function calling",
+            "Tool definitions",
+            "Structured outputs",
+            "Agent patterns"
+          ],
+          "key_topics_kr": [
+            "함수 호출",
+            "도구 정의",
+            "구조화된 출력",
+            "에이전트 패턴"
+          ]
+        },
+        {
+          "id": "anthropic_vision",
+          "title": "Vision Prompting Guide",
+          "title_kr": "비전 프롬프팅 가이드",
+          "url": "https://docs.anthropic.com/en/docs/build-with-claude/vision",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "intermediate",
+          "difficulty_kr": "중급",
+          "description": "Best practices for prompting Claude with images, including image understanding and analysis tasks.",
+          "description_kr": "이미지 이해 및 분석 작업을 포함한 Claude의 이미지 프롬프팅 모범 사례입니다.",
+          "key_topics": [
+            "Image prompts",
+            "Visual analysis",
+            "Multimodal reasoning",
+            "Image + text combinations"
+          ],
+          "key_topics_kr": [
+            "이미지 프롬프트",
+            "시각 분석",
+            "멀티모달 추론",
+            "이미지 + 텍스트 조합"
+          ]
+        }
+      ]
+    },
+    "google": {
+      "name": "Google (Gemini)",
+      "icon": "🔵",
+      "color": "#4285F4",
+      "resources": [
+        {
+          "id": "google_strategies",
+          "title": "Prompt Design Strategies",
+          "title_kr": "프롬프트 디자인 전략",
+          "url": "https://ai.google.dev/gemini-api/docs/prompting-strategies",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "beginner_to_advanced",
+          "difficulty_kr": "초급~고급",
+          "description": "Google's official guide to prompt engineering for Gemini models, covering fundamental strategies and advanced techniques.",
+          "description_kr": "Gemini 모델을 위한 프롬프트 엔지니어링 공식 가이드로, 기본 전략과 고급 기법을 다룹니다.",
+          "key_topics": [
+            "Zero-shot",
+            "Few-shot",
+            "Chain-of-thought",
+            "Self-consistency",
+            "Prompt chaining"
+          ],
+          "key_topics_kr": [
+            "제로샷",
+            "퓨샷",
+            "단계적 사고",
+            "자기 일관성",
+            "프롬프트 체이닝"
+          ]
+        },
+        {
+          "id": "google_intro",
+          "title": "Prompting Introduction",
+          "title_kr": "프롬프팅 입문",
+          "url": "https://ai.google.dev/gemini-api/docs/prompting-intro",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "beginner",
+          "difficulty_kr": "초급",
+          "description": "Introductory guide to understanding how prompts work with Gemini and basic prompting principles.",
+          "description_kr": "Gemini에서 프롬프트가 작동하는 방식과 기본 프롬프팅 원칙을 이해하기 위한 입문 가이드입니다.",
+          "key_topics": [
+            "Prompt basics",
+            "Model behavior",
+            "Input formatting",
+            "Safety settings"
+          ],
+          "key_topics_kr": [
+            "프롬프트 기초",
+            "모델 동작",
+            "입력 형식화",
+            "안전 설정"
+          ]
+        },
+        {
+          "id": "google_system_instructions",
+          "title": "System Instructions",
+          "title_kr": "시스템 지시사항",
+          "url": "https://ai.google.dev/gemini-api/docs/system-instructions",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "intermediate",
+          "difficulty_kr": "중급",
+          "description": "Documentation on using system instructions to set model behavior, role, and constraints for Gemini.",
+          "description_kr": "Gemini의 모델 동작, 역할 및 제약 조건을 설정하기 위한 시스템 지시사항 사용 문서입니다.",
+          "key_topics": [
+            "System-level prompts",
+            "Persona setting",
+            "Behavioral constraints",
+            "Context setting"
+          ],
+          "key_topics_kr": [
+            "시스템 수준 프롬프트",
+            "페르소나 설정",
+            "행동 제약",
+            "컨텍스트 설정"
+          ]
+        },
+        {
+          "id": "google_cookbook",
+          "title": "Gemini API Cookbook (GitHub)",
+          "title_kr": "Gemini API 쿡북 (GitHub)",
+          "url": "https://github.com/google-gemini/gemini-api-cookbook",
+          "type": "Cookbook",
+          "type_kr": "쿡북",
+          "difficulty": "intermediate_to_advanced",
+          "difficulty_kr": "중급~고급",
+          "description": "Collection of practical examples and tutorials for working with Gemini API, including advanced prompting techniques.",
+          "description_kr": "고급 프롬프팅 기법을 포함한 Gemini API 작업을 위한 실전 예제 및 튜토리얼 모음입니다.",
+          "key_topics": [
+            "API integration",
+            "Multimodal prompts",
+            "Function calling",
+            "Streaming",
+            "Embeddings"
+          ],
+          "key_topics_kr": [
+            "API 통합",
+            "멀티모달 프롬프트",
+            "함수 호출",
+            "스트리밍",
+            "임베딩"
+          ]
+        },
+        {
+          "id": "google_vision",
+          "title": "Vision and Media Prompting",
+          "title_kr": "비전 및 미디어 프롬프팅",
+          "url": "https://ai.google.dev/gemini-api/docs/vision",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "intermediate",
+          "difficulty_kr": "중급",
+          "description": "Guide for prompting Gemini with images, videos, and audio for multimodal understanding tasks.",
+          "description_kr": "멀티모달 이해 작업을 위한 이미지, 비디오 및 오디오를 사용한 Gemini 프롬프팅 가이드입니다.",
+          "key_topics": [
+            "Image analysis",
+            "Video understanding",
+            "Audio transcription",
+            "Multimodal reasoning"
+          ],
+          "key_topics_kr": [
+            "이미지 분석",
+            "비디오 이해",
+            "오디오 전사",
+            "멀티모달 추론"
+          ]
+        },
+        {
+          "id": "google_function_calling",
+          "title": "Function Calling",
+          "title_kr": "함수 호출",
+          "url": "https://ai.google.dev/gemini-api/docs/function-calling",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "advanced",
+          "difficulty_kr": "고급",
+          "description": "Official documentation on implementing function calling with Gemini for tool use and structured outputs.",
+          "description_kr": "도구 사용 및 구조화된 출력을 위한 Gemini의 함수 호출 구현에 대한 공식 문서입니다.",
+          "key_topics": [
+            "Function declarations",
+            "Tool use",
+            "Structured data extraction",
+            "Agent workflows"
+          ],
+          "key_topics_kr": [
+            "함수 선언",
+            "도구 사용",
+            "구조화된 데이터 추출",
+            "에이전트 워크플로우"
+          ]
+        }
+      ]
+    },
+    "openai": {
+      "name": "OpenAI (GPT)",
+      "icon": "🟢",
+      "color": "#10A37F",
+      "resources": [
+        {
+          "id": "openai_guide",
+          "title": "Prompt Engineering Guide",
+          "title_kr": "프롬프트 엔지니어링 가이드",
+          "url": "https://platform.openai.com/docs/guides/prompt-engineering",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "beginner_to_advanced",
+          "difficulty_kr": "초급~고급",
+          "description": "OpenAI's official prompt engineering guide with six core strategies for getting better results from GPT models.",
+          "description_kr": "GPT 모델에서 더 나은 결과를 얻기 위한 6가지 핵심 전략을 포함한 OpenAI의 공식 프롬프트 엔지니어링 가이드입니다.",
+          "key_topics": [
+            "Clear instructions",
+            "Reference text",
+            "Task decomposition",
+            "Reasoning time",
+            "External tools"
+          ],
+          "key_topics_kr": [
+            "명확한 지시사항",
+            "참조 텍스트",
+            "작업 분해",
+            "추론 시간",
+            "외부 도구"
+          ]
+        },
+        {
+          "id": "openai_cookbook",
+          "title": "OpenAI Cookbook (GitHub)",
+          "title_kr": "OpenAI 쿡북 (GitHub)",
+          "url": "https://github.com/openai/openai-cookbook",
+          "type": "Cookbook",
+          "type_kr": "쿡북",
+          "difficulty": "intermediate_to_advanced",
+          "difficulty_kr": "중급~고급",
+          "description": "Official collection of example code and guides for accomplishing common tasks with the OpenAI API.",
+          "description_kr": "OpenAI API로 일반적인 작업을 수행하기 위한 예제 코드 및 가이드 공식 모음입니다.",
+          "key_topics": [
+            "API usage",
+            "Embeddings",
+            "Fine-tuning",
+            "Function calling",
+            "RAG"
+          ],
+          "key_topics_kr": [
+            "API 사용",
+            "임베딩",
+            "파인튜닝",
+            "함수 호출",
+            "RAG"
+          ]
+        },
+        {
+          "id": "openai_text_generation",
+          "title": "Text Generation Guide",
+          "title_kr": "텍스트 생성 가이드",
+          "url": "https://platform.openai.com/docs/guides/text-generation",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "beginner",
+          "difficulty_kr": "초급",
+          "description": "Introduction to generating text with GPT models, including basic prompting and parameters.",
+          "description_kr": "기본 프롬프팅 및 매개변수를 포함한 GPT 모델로 텍스트 생성 입문서입니다.",
+          "key_topics": [
+            "Completions API",
+            "Chat format",
+            "System/user/assistant roles",
+            "Temperature",
+            "Tokens"
+          ],
+          "key_topics_kr": [
+            "완성 API",
+            "채팅 형식",
+            "시스템/사용자/어시스턴트 역할",
+            "온도",
+            "토큰"
+          ]
+        },
+        {
+          "id": "openai_function_calling",
+          "title": "Function Calling Guide",
+          "title_kr": "함수 호출 가이드",
+          "url": "https://platform.openai.com/docs/guides/function-calling",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "advanced",
+          "difficulty_kr": "고급",
+          "description": "Official documentation on using function calling to connect GPT models to external tools and get structured outputs.",
+          "description_kr": "GPT 모델을 외부 도구에 연결하고 구조화된 출력을 얻기 위한 함수 호출 사용에 대한 공식 문서입니다.",
+          "key_topics": [
+            "Function definitions",
+            "Tool use",
+            "JSON mode",
+            "Structured data",
+            "Parallel function calling"
+          ],
+          "key_topics_kr": [
+            "함수 정의",
+            "도구 사용",
+            "JSON 모드",
+            "구조화된 데이터",
+            "병렬 함수 호출"
+          ]
+        },
+        {
+          "id": "openai_vision",
+          "title": "Vision Guide",
+          "title_kr": "비전 가이드",
+          "url": "https://platform.openai.com/docs/guides/vision",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "intermediate",
+          "difficulty_kr": "중급",
+          "description": "Guide for using GPT-4 with vision capabilities to understand and analyze images.",
+          "description_kr": "이미지를 이해하고 분석하기 위한 비전 기능이 있는 GPT-4 사용 가이드입니다.",
+          "key_topics": [
+            "Image inputs",
+            "Visual reasoning",
+            "Limitations",
+            "Best practices for image prompts"
+          ],
+          "key_topics_kr": [
+            "이미지 입력",
+            "시각 추론",
+            "한계",
+            "이미지 프롬프트 모범 사례"
+          ]
+        },
+        {
+          "id": "openai_production",
+          "title": "Production Best Practices",
+          "title_kr": "프로덕션 모범 사례",
+          "url": "https://platform.openai.com/docs/guides/production-best-practices",
+          "type": "Guide",
+          "type_kr": "가이드",
+          "difficulty": "advanced",
+          "difficulty_kr": "고급",
+          "description": "Guidelines for building production-ready applications with OpenAI models, including safety and reliability.",
+          "description_kr": "안전성과 신뢰성을 포함한 OpenAI 모델로 프로덕션 준비 애플리케이션 구축 가이드라인입니다.",
+          "key_topics": [
+            "Rate limiting",
+            "Error handling",
+            "Safety",
+            "Monitoring",
+            "Cost optimization"
+          ],
+          "key_topics_kr": [
+            "속도 제한",
+            "오류 처리",
+            "안전성",
+            "모니터링",
+            "비용 최적화"
+          ]
+        },
+        {
+          "id": "openai_examples",
+          "title": "Prompt Examples",
+          "title_kr": "프롬프트 예제",
+          "url": "https://platform.openai.com/examples",
+          "type": "Examples",
+          "type_kr": "예제 모음",
+          "difficulty": "beginner_to_intermediate",
+          "difficulty_kr": "초급~중급",
+          "description": "Gallery of example prompts for various tasks with working demonstrations.",
+          "description_kr": "작동 데모가 포함된 다양한 작업을 위한 예제 프롬프트 갤러리입니다.",
+          "key_topics": [
+            "Task-specific examples",
+            "Templates",
+            "Use cases",
+            "Starting points"
+          ],
+          "key_topics_kr": [
+            "작업별 예제",
+            "템플릿",
+            "사용 사례",
+            "시작점"
+          ]
+        }
+      ]
+    }
+  },
+  "additional_resources": [
+    {
+      "id": "dair_ai_guide",
+      "title": "Prompt Engineering Guide (DAIR.AI)",
+      "title_kr": "프롬프트 엔지니어링 가이드 (DAIR.AI)",
+      "url": "https://www.promptingguide.ai/",
+      "url_kr": "https://www.promptingguide.ai/kr",
+      "type": "Community Guide",
+      "type_kr": "커뮤니티 가이드",
+      "difficulty": "all_levels",
+      "difficulty_kr": "전체 수준",
+      "description": "Comprehensive, open-source guide covering prompt engineering techniques across all major models with academic references.",
+      "description_kr": "학술 참고 자료와 함께 모든 주요 모델에 걸친 프롬프트 엔지니어링 기법을 다루는 포괄적인 오픈소스 가이드입니다.",
+      "key_topics": [
+        "Techniques",
+        "Papers",
+        "Tools",
+        "Risks",
+        "Applications"
+      ],
+      "key_topics_kr": [
+        "기법",
+        "논문",
+        "도구",
+        "위험 요소",
+        "응용 프로그램"
+      ],
+      "note": "Available in Korean",
+      "note_kr": "한국어로 제공됨"
+    },
+    {
+      "id": "learn_prompting",
+      "title": "Learn Prompting",
+      "title_kr": "Learn Prompting",
+      "url": "https://learnprompting.org/",
+      "type": "Educational Platform",
+      "type_kr": "교육 플랫폼",
+      "difficulty": "beginner_to_advanced",
+      "difficulty_kr": "초급~고급",
+      "description": "Free, open-source course on prompt engineering with structured lessons and exercises.",
+      "description_kr": "구조화된 수업과 연습 문제가 있는 프롬프트 엔지니어링에 대한 무료 오픈소스 과정입니다.",
+      "key_topics": [
+        "Basic to advanced techniques",
+        "Applications",
+        "Reliability",
+        "Image prompting"
+      ],
+      "key_topics_kr": [
+        "기초부터 고급 기법까지",
+        "응용",
+        "신뢰성",
+        "이미지 프롬프팅"
+      ]
+    }
+  ],
+  "topics": {
+    "basic_prompting": {
+      "name": "Basic Prompting",
+      "name_kr": "기본 프롬프팅",
+      "icon": "📝",
+      "related_resources": [
+        "anthropic_overview",
+        "google_intro",
+        "openai_text_generation"
+      ]
+    },
+    "system_prompts": {
+      "name": "System Prompts",
+      "name_kr": "시스템 프롬프트",
+      "icon": "🎯",
+      "related_resources": [
+        "anthropic_system_prompts",
+        "google_system_instructions",
+        "openai_text_generation"
+      ]
+    },
+    "function_calling": {
+      "name": "Function Calling",
+      "name_kr": "함수 호출",
+      "icon": "🔧",
+      "related_resources": [
+        "anthropic_tool_use",
+        "google_function_calling",
+        "openai_function_calling"
+      ]
+    },
+    "multimodal": {
+      "name": "Multimodal",
+      "name_kr": "멀티모달",
+      "icon": "🖼️",
+      "related_resources": [
+        "anthropic_vision",
+        "google_vision",
+        "openai_vision"
+      ]
+    },
+    "advanced_techniques": {
+      "name": "Advanced Techniques",
+      "name_kr": "고급 기법",
+      "icon": "🚀",
+      "related_resources": [
+        "anthropic_cookbook",
+        "google_cookbook",
+        "openai_cookbook"
+      ]
+    }
+  }
+}

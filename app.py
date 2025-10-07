@@ -20,6 +20,7 @@ except ImportError:
 
 from components.template_manager import render_template_manager
 from components.prompt_editor import render_prompt_editor
+from components.prompt_guide import render_prompt_guide
 from ai_prompt_maker.service import PromptMakerService
 from ai_prompt_maker.models import PromptTemplate, PromptComponent, PromptCategory, PromptValidationError
 from utils.template_storage import TemplateStorageManager
@@ -655,11 +656,12 @@ def main():
     TemplateStorageManager.initialize()
 
     # 탭 생성 (도메인별 프롬프트 생성 탭 추가)
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🎮 게임 개발",
         "🎨 UI/UX 디자인",
         "📋 템플릿 관리",
-        "✏️ 프롬프트 편집"
+        "✏️ 프롬프트 편집",
+        "📚 프롬프트 가이드"
     ])
 
     with tab1:
@@ -673,6 +675,9 @@ def main():
 
     with tab4:
         render_prompt_editor()
+
+    with tab5:
+        render_prompt_guide()
 
     # 푸터
     st.markdown("---")
