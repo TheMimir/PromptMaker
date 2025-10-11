@@ -1,0 +1,29 @@
+{
+  "moai": {
+    "version": "0.2.17"
+  },
+  "mode": "personal",
+  "projectName": "PromptMaker",
+  "features": [],
+  "locale": "ko",
+  "git": {
+    "enabled": true,
+    "autoCommit": true,
+    "branchPrefix": ""
+  },
+  "spec": {
+    "storage": "local",
+    "workflow": "commit",
+    "localPath": ".moai/specs/"
+  },
+  "backup": {
+    "enabled": true,
+    "retentionDays": 30
+  },
+  "constitution": {
+    "enforce_tdd": true,
+    "enforce_spec": false,
+    "require_tags": true,
+    "test_coverage_target": 85
+  }
+}

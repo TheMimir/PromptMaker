@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-10-10T20:55:45.100Z",
+  "backup_path": ".moai-backup-2025-10-10T20-55-45",
+  "backed_up_files": [
+    ".claude/",
+    ".moai/",
+    "CLAUDE.md"
+  ],
+  "status": "pending",
+  "created_by": "moai init"
+}

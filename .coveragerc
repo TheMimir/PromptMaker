@@ -1,0 +1,27 @@
+# @CODE:TEST-001 | SPEC: .moai/specs/SPEC-TEST-001/spec.md | TEST: tests/
+
+[run]
+source =
+    ai_prompt_maker
+    utils
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    # Streamlit UI 제외 (pytest로 테스트 불가능)
+    components/*
+
+[report]
+precision = 0
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+
+[html]
+directory = htmlcov

@@ -16,7 +16,8 @@
       "WebSearch",
       "Bash(timeout:*)",
       "Read(//Users/mimir/.ssh/**)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "SlashCommand(/alfred:1-spec)"
     ],
     "deny": [],
     "ask": []
