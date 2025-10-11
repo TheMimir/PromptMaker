@@ -22,19 +22,27 @@ tests/
 ├── README.md                            # 이 파일
 ├── ai_prompt_maker/                     # 핵심 로직 테스트
 │   ├── __init__.py
-│   ├── test_models.py                   # PromptComponent, PromptTemplate 테스트 (82개 테스트)
+│   ├── test_models_component.py         # PromptComponent, PromptVersion 테스트 (15개 테스트, 225 LOC)
+│   ├── test_models_template.py          # PromptTemplate, 예외 클래스 테스트 (18개 테스트, 274 LOC)
 │   ├── test_prompt_generator.py         # PromptGenerator 테스트 (30개 테스트)
-│   └── test_service.py                  # PromptMakerService 테스트 (60개 테스트)
+│   ├── test_service_basic.py            # 초기화, 설정, 통계, 정리 (11개 테스트, 170 LOC)
+│   ├── test_service_template.py         # 템플릿 CRUD (16개 테스트, 242 LOC)
+│   ├── test_service_search.py           # 검색, 도메인 관리 (9개 테스트, 195 LOC)
+│   ├── test_service_security.py         # 보안 검증, 데이터 검증 (15개 테스트, 212 LOC)
+│   └── test_service_advanced.py         # 고급 기능 (생성, I/O, 캐시, 에러) (14개 테스트, 287 LOC)
 ├── components/                          # UI 컴포넌트 테스트
 │   └── __init__.py
 └── utils/                               # 유틸리티 테스트
     ├── __init__.py
-    ├── test_data_handler.py             # DataHandler 테스트 (16개 테스트)
+    ├── test_data_handler_basic.py       # 초기화, 설정, 목록, 검색 (4개 클래스, 129 LOC)
+    ├── test_data_handler_crud.py        # 템플릿 로드, 삭제, 복제 (3개 클래스, 196 LOC)
+    ├── test_data_handler_version.py     # 버전 관리, 내보내기 (4개 클래스, 442 LOC)
     └── test_template_storage.py         # TemplateStorageManager 테스트 (18개 테스트)
 ```
 
-**총 테스트 수**: 약 206개 테스트
-**총 코드 라인**: 2,250 LOC
+**총 테스트 수**: 168개 테스트 (파일 분할 후)
+**총 코드 라인**: 2,372 LOC (설정 파일 포함)
+**파일 수**: 원본 3개 → 10개로 세분화 (모듈화 개선)
 
 ---
 
@@ -188,7 +196,7 @@ def test_should_return_none_if_template_not_found(self):
 
 ## 보안 테스트
 
-**중요**: `test_service.py`에 Path Traversal 방어 테스트 포함
+**중요**: `test_service_security.py`에 Path Traversal 방어 테스트 포함
 
 ```python
 def test_should_reject_template_id_with_path_traversal(self, service):

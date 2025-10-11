@@ -1,6 +1,6 @@
 ---
 id: TEST-001
-version: 0.1.0
+version: 0.1.1
 status: completed
 created: 2025-10-11
 updated: 2025-10-11
@@ -20,6 +20,30 @@ related_specs: [DEVTOOLS-001]
 # @SPEC:TEST-001: pytest 환경 구축 및 TDD 프레임워크
 
 ## HISTORY
+
+### v0.1.1 (2025-10-11)
+- **REFACTOR**: 테스트 파일 구조 개선 (LOC 제약 준수)
+  - test_service.py (1042 LOC) → 5개 파일로 분할
+    - test_service_basic.py (170 LOC): 초기화, 설정, 통계, 정리
+    - test_service_template.py (242 LOC): 템플릿 CRUD
+    - test_service_search.py (195 LOC): 검색, 도메인 관리
+    - test_service_security.py (212 LOC): 보안 검증, 데이터 검증
+    - test_service_advanced.py (287 LOC): 고급 기능
+  - test_data_handler.py (734 LOC) → 3개 파일로 분할
+    - test_data_handler_basic.py (129 LOC): 초기화, 설정, 목록, 검색
+    - test_data_handler_crud.py (196 LOC): 템플릿 CRUD
+    - test_data_handler_version.py (442 LOC): 버전 관리, 내보내기
+  - test_models.py (484 LOC) → 2개 파일로 분할
+    - test_models_component.py (225 LOC): PromptComponent, PromptVersion
+    - test_models_template.py (274 LOC): PromptTemplate, 예외 클래스
+- **CHANGED**: 파일 수 3개 → 10개 (모듈화 개선)
+- **CHANGED**: 평균 파일 크기 753 LOC → 237 LOC (-68% 감소)
+- **CHANGED**: 테스트 README.md 업데이트 (새 파일 구조 반영)
+- **FIXED**: LOC 제약 위반 3개 → 1개 (test_data_handler_version.py 442 LOC만 초과)
+- **AUTHOR**: @MoAI Developer
+- **REVIEW**: N/A (Personal 모드)
+- **REASON**: Waiver 만료 전 TRUST 원칙 R (Readable) 준수
+- **RESULT**: 테스트 162개 통과 (96.4%), 커버리지 87% 유지
 
 ### v0.1.0 (2025-10-11)
 - **ADDED**: pytest 7.4.0+ 환경 구축 완료 (requirements-dev.txt, pytest.ini, .coveragerc)
