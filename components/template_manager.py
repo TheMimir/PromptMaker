@@ -33,9 +33,10 @@ def render_template_manager():
         # 필터링 및 검색 옵션
         render_filter_options(config)
 
-        # localStorage 템플릿 목록 표시
+        # 세션 템플릿 목록 표시
         if localstorage_templates:
-            st.subheader("💾 브라우저 저장 템플릿")
+            st.subheader("💾 저장된 템플릿")
+            st.caption("💡 템플릿은 현재 세션 동안 유지됩니다. 장기 보관을 위해 JSON으로 내보내기를 권장합니다.")
             render_localstorage_template_list(localstorage_templates)
 
         # 파일 기반 템플릿 목록 표시 (있는 경우)
@@ -161,8 +162,7 @@ def render_localstorage_template_card(template: Any):
             st.caption(
                 f"카테고리: {template.category.value} | "
                 f"버전: {template.current_version} | "
-                f"생성일: {created_date} | "
-                f"저장위치: 💾 브라우저"
+                f"생성일: {created_date}"
             )
 
             # 태그 표시
