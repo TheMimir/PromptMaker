@@ -17,7 +17,11 @@
       "Bash(timeout:*)",
       "Read(//Users/mimir/.ssh/**)",
       "Bash(git rm:*)",
-      "SlashCommand(/alfred:1-spec)"
+      "SlashCommand(/alfred:1-spec)",
+      "Read(///**)",
+      "Bash(uv pip:*)",
+      "Bash(uv run:*)",
+      "Bash(python -m pytest:*)"
     ],
     "deny": [],
     "ask": []
