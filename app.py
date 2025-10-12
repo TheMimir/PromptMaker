@@ -596,40 +596,47 @@ def render_prompt_generator(domain: str = "game_dev"):
                     'rule': expanded_rules
                 }
 
-                # 프롬프트 표시
-                st.code(generated_prompt, language="text")
-
-                # 복사 안내 메시지
-                st.caption("💡 위 코드 블록 오른쪽 상단의 복사 아이콘(📋)을 클릭하여 클립보드에 복사할 수 있습니다")
-
-                # 버튼 열 (다운로드 & 템플릿 저장)
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    st.download_button(
-                        label="💾 텍스트 파일로 저장",
-                        data=generated_prompt,
-                        file_name=f"prompt_{int(time.time())}.txt",
-                        mime="text/plain",
-                        type="primary",
-                        use_container_width=True
-                    )
-
-                with col2:
-                    if st.button(
-                        "📁 템플릿으로 저장",
-                        type="secondary",
-                        use_container_width=True,
-                        key=f"{domain}_save_template_button"
-                    ):
-                        st.session_state[f"{session_key}_show_save_dialog"] = True
-                        st.rerun()
-
             except Exception as e:
                 st.error(f"❌ 프롬프트 생성 오류: {e}")
                 import traceback
                 with st.expander("🔍 상세 오류 정보"):
                     st.code(traceback.format_exc())
+
+    # 프롬프트 표시 영역 (submitted 블록 밖으로 이동)
+    last_generated_prompt = st.session_state.get(f"{session_key}_last_generated_prompt")
+
+    if last_generated_prompt:
+        st.divider()
+        st.subheader("✨ 생성된 프롬프트")
+
+        # 프롬프트 표시
+        st.code(last_generated_prompt, language="text")
+
+        # 복사 안내 메시지
+        st.caption("💡 위 코드 블록 오른쪽 상단의 복사 아이콘(📋)을 클릭하여 클립보드에 복사할 수 있습니다")
+
+        # 버튼 열 (다운로드 & 템플릿 저장)
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.download_button(
+                label="💾 텍스트 파일로 저장",
+                data=last_generated_prompt,
+                file_name=f"prompt_{int(time.time())}.txt",
+                mime="text/plain",
+                type="primary",
+                use_container_width=True
+            )
+
+        with col2:
+            if st.button(
+                "📁 템플릿으로 저장",
+                type="secondary",
+                use_container_width=True,
+                key=f"{domain}_save_template_button"
+            ):
+                st.session_state[f"{session_key}_show_save_dialog"] = True
+                st.rerun()
 
     # 템플릿 저장 다이얼로그 표시
     if st.session_state[f"{session_key}_show_save_dialog"]:
