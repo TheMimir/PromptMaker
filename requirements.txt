@@ -8,3 +8,6 @@ jsonschema>=4.20.0,<5.0.0   # JSON validation
 
 # Timezone support
 pytz>=2024.1
+
+# PDF generation (optional)
+reportlab>=4.0.0,<5.0.0
