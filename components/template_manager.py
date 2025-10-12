@@ -9,6 +9,7 @@ from datetime import datetime
 import uuid
 
 from utils.data_handler import DataHandler
+from utils.template_storage import TemplateStorageManager
 
 
 def render_template_manager():
@@ -17,20 +18,44 @@ def render_template_manager():
     st.write("저장된 프롬프트 템플릿을 관리합니다.")
 
     try:
-        data_handler = DataHandler()
-        config = data_handler.load_config()
+        # localStorage 템플릿 로드
+        localstorage_templates = TemplateStorageManager.load_templates(use_cache=False)
+
+        # 파일 기반 템플릿 로드 (기존 시스템과의 호환성)
+        try:
+            data_handler = DataHandler()
+            config = data_handler.load_config()
+        except Exception as e:
+            st.warning(f"⚠️ 파일 기반 템플릿 로드 실패: {e}")
+            data_handler = None
+            config = {'categories': ['기획', '프로그램', '아트', 'QA', '전체']}
 
         # 필터링 및 검색 옵션
-        render_filter_options(data_handler, config)
+        render_filter_options(config)
 
-        # 템플릿 목록 조회 및 표시
-        render_template_list(data_handler)
+        # localStorage 템플릿 목록 표시
+        if localstorage_templates:
+            st.subheader("💾 브라우저 저장 템플릿")
+            render_localstorage_template_list(localstorage_templates)
+
+        # 파일 기반 템플릿 목록 표시 (있는 경우)
+        if data_handler:
+            st.divider()
+            st.subheader("📁 파일 시스템 템플릿")
+            render_template_list(data_handler)
+
+        # 템플릿이 하나도 없는 경우
+        if not localstorage_templates and (not data_handler or not data_handler.list_templates(None)):
+            st.info("💡 저장된 템플릿이 없습니다. 프롬프트를 생성한 후 '템플릿으로 저장' 버튼을 클릭하여 저장하세요.")
 
     except Exception as e:
         st.error(f"템플릿 관리자 로딩 실패: {e}")
+        import traceback
+        with st.expander("🔍 상세 오류 정보"):
+            st.code(traceback.format_exc())
 
 
-def render_filter_options(data_handler: DataHandler, config: Dict[str, Any]):
+def render_filter_options(config: Dict[str, Any]):
     """필터링 및 검색 옵션 렌더링"""
 
     col1, col2, col3 = st.columns([2, 2, 1])
@@ -64,6 +89,227 @@ def render_filter_options(data_handler: DataHandler, config: Dict[str, Any]):
             for key in list(st.session_state.keys()):
                 if key.startswith('preview_template') or key.startswith('show_actions'):
                     del st.session_state[key]
+            st.rerun()
+
+
+def render_localstorage_template_list(templates: List[Any]):
+    """localStorage 템플릿 목록 렌더링"""
+
+    # 위젯에서 직접 값 읽기
+    category_filter = st.session_state.get('template_category_filter', '전체')
+    search_term = st.session_state.get('template_search', '')
+
+    try:
+        # 필터링 적용
+        filtered_templates = templates
+
+        # 카테고리 필터링
+        if category_filter and category_filter != "전체":
+            filtered_templates = [
+                t for t in filtered_templates
+                if t.category.value == category_filter
+            ]
+
+        # 검색어 필터링
+        if search_term:
+            filtered_templates = [
+                t for t in filtered_templates
+                if search_term.lower() in t.name.lower()
+            ]
+
+        if not filtered_templates:
+            if search_term:
+                st.info(f"'{search_term}'에 대한 검색 결과가 없습니다.")
+            elif category_filter != "전체":
+                st.info(f"'{category_filter}' 카테고리에 저장된 템플릿이 없습니다.")
+            else:
+                st.info("저장된 템플릿이 없습니다.")
+            return
+
+        # 템플릿 개수 표시
+        st.info(f"💾 총 {len(filtered_templates)}개의 템플릿이 있습니다.")
+        st.divider()
+
+        # 템플릿 카드 렌더링
+        for template in filtered_templates:
+            render_localstorage_template_card(template)
+
+    except Exception as e:
+        st.error(f"템플릿 목록 로딩 실패: {e}")
+        import traceback
+        with st.expander("🔍 상세 오류 정보"):
+            st.code(traceback.format_exc())
+
+
+def render_localstorage_template_card(template: Any):
+    """localStorage 템플릿 카드 렌더링"""
+
+    template_id = template.template_id
+
+    # 카드 컨테이너
+    with st.container():
+        # 헤더 정보
+        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+
+        with col1:
+            st.subheader(f"📝 {template.name}")
+
+            # 메타데이터 정보
+            current_version = template.get_current_version()
+            created_date = current_version.created_at.strftime('%Y-%m-%d') if current_version else 'Unknown'
+
+            st.caption(
+                f"카테고리: {template.category.value} | "
+                f"버전: {template.current_version} | "
+                f"생성일: {created_date} | "
+                f"저장위치: 💾 브라우저"
+            )
+
+            # 태그 표시
+            if template.tags:
+                tag_str = " ".join([f"`{tag}`" for tag in template.tags])
+                st.markdown(f"**태그:** {tag_str}")
+
+        with col2:
+            show_preview = st.button(
+                "👁️ 미리보기",
+                key=f"preview_ls_btn_{template_id}"
+            )
+            if show_preview:
+                key = f"preview_ls_template_{template_id}"
+                st.session_state[key] = not st.session_state.get(key, False)
+
+        with col3:
+            if st.button("📋 복사", key=f"copy_ls_btn_{template_id}"):
+                current_version = template.get_current_version()
+                if current_version:
+                    st.session_state.clipboard_content = current_version.generated_prompt
+                    st.success("클립보드에 복사 완료!", icon="✅")
+
+        with col4:
+            show_actions = st.button(
+                "⚙️ 관리",
+                key=f"actions_ls_btn_{template_id}"
+            )
+            if show_actions:
+                key = f"show_ls_actions_{template_id}"
+                st.session_state[key] = not st.session_state.get(key, False)
+
+        # 미리보기 표시
+        if st.session_state.get(f"preview_ls_template_{template_id}", False):
+            render_localstorage_template_preview(template)
+
+        # 액션 버튼들 표시
+        if st.session_state.get(f"show_ls_actions_{template_id}", False):
+            render_localstorage_template_actions(template)
+
+    st.divider()
+
+
+def render_localstorage_template_preview(template: Any):
+    """localStorage 템플릿 미리보기 렌더링"""
+
+    current_version = template.get_current_version()
+    if not current_version:
+        st.error("현재 버전을 찾을 수 없습니다.")
+        return
+
+    # 프롬프트 텍스트 표시
+    st.code(current_version.generated_prompt, language="text")
+
+    # 컴포넌트 정보 표시
+    components = current_version.components
+
+    with st.expander("📋 컴포넌트 정보"):
+        col_info1, col_info2 = st.columns(2)
+
+        with col_info1:
+            if components.role:
+                st.write("**역할:**", ", ".join(components.role))
+            if components.goal:
+                st.write("**목표:**", components.goal)
+            if components.context:
+                st.write("**맥락:**", ", ".join(components.context))
+
+        with col_info2:
+            if components.output:
+                st.write("**출력:**", components.output)
+            if components.rule:
+                st.write("**규칙:**")
+                for rule in components.rule:
+                    st.write(f"  • {rule}")
+            if components.document:
+                with st.expander("📄 문서/데이터"):
+                    st.text(components.document)
+
+
+def render_localstorage_template_actions(template: Any):
+    """localStorage 템플릿 액션 버튼 렌더링"""
+
+    template_id = template.template_id
+
+    st.markdown("---")
+    st.markdown("**🛠️ 템플릿 관리 옵션**")
+
+    action_col1, action_col2, action_col3 = st.columns(3)
+
+    with action_col1:
+        if st.button("📤 텍스트 내보내기", key=f"export_txt_ls_{template_id}"):
+            current_version = template.get_current_version()
+            if current_version:
+                st.download_button(
+                    label="💾 TXT 다운로드",
+                    data=current_version.generated_prompt,
+                    file_name=f"{template.name}.txt",
+                    mime="text/plain",
+                    key=f"download_txt_ls_{template_id}"
+                )
+
+    with action_col2:
+        if st.button("📤 JSON 내보내기", key=f"export_json_ls_{template_id}"):
+            st.download_button(
+                label="💾 JSON 다운로드",
+                data=template.to_json(),
+                file_name=f"{template.name}.json",
+                mime="application/json",
+                key=f"download_json_ls_{template_id}"
+            )
+
+    with action_col3:
+        if st.button("🗑️ 삭제", key=f"delete_ls_btn_{template_id}", type="secondary"):
+            st.session_state[f"confirm_delete_ls_{template_id}"] = True
+
+    # 삭제 확인 대화상자
+    if st.session_state.get(f"confirm_delete_ls_{template_id}", False):
+        render_localstorage_delete_confirmation(template)
+
+
+def render_localstorage_delete_confirmation(template: Any):
+    """localStorage 템플릿 삭제 확인 대화상자"""
+
+    template_id = template.template_id
+
+    st.warning(f"⚠️ **'{template.name}'** 템플릿을 정말 삭제하시겠습니까?")
+    st.write("이 작업은 되돌릴 수 없습니다.")
+
+    confirm_col1, confirm_col2, confirm_col3 = st.columns([1, 1, 2])
+
+    with confirm_col1:
+        if st.button("✅ 삭제 확인", key=f"confirm_yes_ls_{template_id}", type="primary"):
+            with st.spinner("삭제 중..."):
+                if TemplateStorageManager.delete_template(template_id):
+                    st.success(f"템플릿 '{template.name}'이 삭제되었습니다!")
+                    # 삭제 후 상태 초기화
+                    for key in list(st.session_state.keys()):
+                        if template_id in key:
+                            del st.session_state[key]
+                    st.rerun()
+                else:
+                    st.error("삭제에 실패했습니다.")
+
+    with confirm_col2:
+        if st.button("❌ 취소", key=f"confirm_no_ls_{template_id}"):
+            st.session_state[f"confirm_delete_ls_{template_id}"] = False
             st.rerun()
 
 
