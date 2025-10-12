@@ -1,9 +1,9 @@
 ---
 id: EXPORT-001
-version: 0.0.1
-status: draft
+version: 0.1.0
+status: completed
 created: 2025-10-11
-updated: 2025-10-11
+updated: 2025-10-12
 author: @Alfred
 priority: high
 category: feature
@@ -27,6 +27,24 @@ scope:
 # @SPEC:EXPORT-001: 프롬프트 내보내기 시스템
 
 ## HISTORY
+
+### v0.1.0 (2025-10-12)
+- **COMPLETED**: TDD 구현 완료 (RED-GREEN-REFACTOR)
+- **AUTHOR**: @Alfred
+- **TEST**: 18개 테스트 케이스 통과, 커버리지 93%
+- **QUALITY**: TRUST 5원칙 92% 준수
+- **FILES**:
+  - ai_prompt_maker/export_service.py (390 LOC)
+  - tests/ai_prompt_maker/test_export_service.py (502 LOC)
+- **FEATURES**:
+  - Markdown 내보내기 (UTF-8 인코딩)
+  - JSON 내보내기 (구조화된 스키마)
+  - PDF 내보내기 (한글 폰트 지원, reportlab 조건부)
+- **SECURITY**:
+  - Path Traversal 방지 (파일명 sanitization)
+  - 파일 크기 제한 강제 (10MB)
+  - 파일명 특수문자 필터링
+- **RELATED**: feature/SPEC-EXPORT-001 브랜치 구현 완료
 
 ### v0.0.1 (2025-10-11)
 - **INITIAL**: 프롬프트 내보내기 시스템 SPEC 최초 작성
