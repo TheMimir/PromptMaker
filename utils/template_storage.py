@@ -150,7 +150,6 @@ class TemplateStorageManager:
                 name=name,
                 category=category,
                 tags=tags or [],
-                description=description,
                 current_version=1,
                 versions=[
                     PromptVersion(
@@ -160,9 +159,7 @@ class TemplateStorageManager:
                         description=description,
                         created_at=datetime.now()
                     )
-                ],
-                created_at=datetime.now(),
-                updated_at=datetime.now()
+                ]
             )
 
             # Convert to dict
