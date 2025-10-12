@@ -21,7 +21,10 @@
       "Read(///**)",
       "Bash(uv pip:*)",
       "Bash(uv run:*)",
-      "Bash(python -m pytest:*)"
+      "Bash(python -m pytest:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(pytest:*)",
+      "Bash(poetry run pytest:*)"
     ],
     "deny": [],
     "ask": []
