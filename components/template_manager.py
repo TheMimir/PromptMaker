@@ -18,8 +18,18 @@ def render_template_manager():
     st.write("저장된 프롬프트 템플릿을 관리합니다.")
 
     try:
-        # localStorage 템플릿 로드
-        localstorage_templates = TemplateStorageManager.load_templates(use_cache=False)
+        # 세션 템플릿 로드 (오류 발생 시 세션 클리어)
+        try:
+            localstorage_templates = TemplateStorageManager.load_templates(use_cache=False)
+        except AttributeError as e:
+            # 이전 버전의 템플릿 데이터로 인한 오류 - 세션 클리어
+            if "'PromptTemplate' object has no attribute" in str(e):
+                st.warning("⚠️ 이전 버전의 템플릿 데이터가 감지되었습니다. 세션을 초기화합니다.")
+                if TemplateStorageManager.STORAGE_KEY in st.session_state:
+                    del st.session_state[TemplateStorageManager.STORAGE_KEY]
+                localstorage_templates = []
+            else:
+                raise
 
         # 파일 기반 템플릿 로드 (기존 시스템과의 호환성)
         try:
