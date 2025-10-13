@@ -146,17 +146,17 @@ def render_localstorage_template_card(template: Any):
     """localStorage 템플릿 카드 렌더링"""
 
     template_id = template.template_id
+    current_version = template.get_current_version()
 
     # 카드 컨테이너
     with st.container():
         # 헤더 정보
-        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+        col1, col2, col3, col4, col5, col6 = st.columns([3, 1, 1, 1, 1, 1])
 
         with col1:
             st.subheader(f"📝 {template.name}")
 
             # 메타데이터 정보
-            current_version = template.get_current_version()
             created_date = current_version.created_at.strftime('%Y-%m-%d') if current_version else 'Unknown'
 
             st.caption(
@@ -173,35 +173,56 @@ def render_localstorage_template_card(template: Any):
         with col2:
             show_preview = st.button(
                 "👁️ 미리보기",
-                key=f"preview_ls_btn_{template_id}"
+                key=f"preview_ls_btn_{template_id}",
+                use_container_width=True
             )
             if show_preview:
                 key = f"preview_ls_template_{template_id}"
                 st.session_state[key] = not st.session_state.get(key, False)
 
         with col3:
-            if st.button("📋 복사", key=f"copy_ls_btn_{template_id}"):
-                current_version = template.get_current_version()
+            if st.button("📋 복사", key=f"copy_ls_btn_{template_id}", use_container_width=True):
                 if current_version:
                     st.session_state.clipboard_content = current_version.generated_prompt
                     st.success("클립보드에 복사 완료!", icon="✅")
 
+        # 파일명 sanitization (보안)
+        import re
+        safe_filename = re.sub(r'[<>:"/\\|?*]', '_', template.name)
+
         with col4:
-            show_actions = st.button(
-                "⚙️ 관리",
-                key=f"actions_ls_btn_{template_id}"
+            if current_version:
+                st.download_button(
+                    label="📥 TXT",
+                    data=current_version.generated_prompt,
+                    file_name=f"{safe_filename}.txt",
+                    mime="text/plain",
+                    key=f"download_txt_ls_{template_id}",
+                    use_container_width=True
+                )
+
+        with col5:
+            st.download_button(
+                label="📥 JSON",
+                data=template.to_json(),
+                file_name=f"{safe_filename}.json",
+                mime="application/json",
+                key=f"download_json_ls_{template_id}",
+                use_container_width=True
             )
-            if show_actions:
-                key = f"show_ls_actions_{template_id}"
-                st.session_state[key] = not st.session_state.get(key, False)
+
+        with col6:
+            if st.button("🗑️ 삭제", key=f"delete_ls_btn_{template_id}", type="secondary", use_container_width=True):
+                st.session_state[f"confirm_delete_ls_{template_id}"] = True
+                st.rerun()
 
         # 미리보기 표시
         if st.session_state.get(f"preview_ls_template_{template_id}", False):
             render_localstorage_template_preview(template)
 
-        # 액션 버튼들 표시
-        if st.session_state.get(f"show_ls_actions_{template_id}", False):
-            render_localstorage_template_actions(template)
+        # 삭제 확인 대화상자
+        if st.session_state.get(f"confirm_delete_ls_{template_id}", False):
+            render_localstorage_delete_confirmation(template)
 
     st.divider()
 
@@ -241,55 +262,6 @@ def render_localstorage_template_preview(template: Any):
             if components.document:
                 with st.expander("📄 문서/데이터"):
                     st.text(components.document)
-
-
-def render_localstorage_template_actions(template: Any):
-    """localStorage 템플릿 액션 버튼 렌더링"""
-
-    template_id = template.template_id
-    current_version = template.get_current_version()
-
-    st.markdown("---")
-    st.markdown("**🛠️ 템플릿 관리 옵션**")
-
-    if not current_version:
-        st.error("❌ 템플릿 버전 정보를 찾을 수 없습니다.")
-        return
-
-    action_col1, action_col2, action_col3 = st.columns(3)
-
-    # 파일명 sanitization (보안)
-    import re
-    safe_filename = re.sub(r'[<>:"/\\|?*]', '_', template.name)
-
-    with action_col1:
-        st.download_button(
-            label="📥 TXT 다운로드",
-            data=current_version.generated_prompt,
-            file_name=f"{safe_filename}.txt",
-            mime="text/plain",
-            key=f"download_txt_ls_{template_id}",
-            use_container_width=True
-        )
-
-    with action_col2:
-        st.download_button(
-            label="📥 JSON 다운로드",
-            data=template.to_json(),
-            file_name=f"{safe_filename}.json",
-            mime="application/json",
-            key=f"download_json_ls_{template_id}",
-            use_container_width=True
-        )
-
-    with action_col3:
-        if st.button("🗑️ 삭제", key=f"delete_ls_btn_{template_id}", type="secondary", use_container_width=True):
-            st.session_state[f"confirm_delete_ls_{template_id}"] = True
-            st.rerun()
-
-    # 삭제 확인 대화상자
-    if st.session_state.get(f"confirm_delete_ls_{template_id}", False):
-        render_localstorage_delete_confirmation(template)
 
 
 def render_localstorage_delete_confirmation(template: Any):
