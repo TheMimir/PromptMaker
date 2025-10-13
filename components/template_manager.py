@@ -247,37 +247,45 @@ def render_localstorage_template_actions(template: Any):
     """localStorage 템플릿 액션 버튼 렌더링"""
 
     template_id = template.template_id
+    current_version = template.get_current_version()
 
     st.markdown("---")
     st.markdown("**🛠️ 템플릿 관리 옵션**")
 
+    if not current_version:
+        st.error("❌ 템플릿 버전 정보를 찾을 수 없습니다.")
+        return
+
     action_col1, action_col2, action_col3 = st.columns(3)
 
+    # 파일명 sanitization (보안)
+    import re
+    safe_filename = re.sub(r'[<>:"/\\|?*]', '_', template.name)
+
     with action_col1:
-        if st.button("📤 텍스트 내보내기", key=f"export_txt_ls_{template_id}"):
-            current_version = template.get_current_version()
-            if current_version:
-                st.download_button(
-                    label="💾 TXT 다운로드",
-                    data=current_version.generated_prompt,
-                    file_name=f"{template.name}.txt",
-                    mime="text/plain",
-                    key=f"download_txt_ls_{template_id}"
-                )
+        st.download_button(
+            label="📥 TXT 다운로드",
+            data=current_version.generated_prompt,
+            file_name=f"{safe_filename}.txt",
+            mime="text/plain",
+            key=f"download_txt_ls_{template_id}",
+            use_container_width=True
+        )
 
     with action_col2:
-        if st.button("📤 JSON 내보내기", key=f"export_json_ls_{template_id}"):
-            st.download_button(
-                label="💾 JSON 다운로드",
-                data=template.to_json(),
-                file_name=f"{template.name}.json",
-                mime="application/json",
-                key=f"download_json_ls_{template_id}"
-            )
+        st.download_button(
+            label="📥 JSON 다운로드",
+            data=template.to_json(),
+            file_name=f"{safe_filename}.json",
+            mime="application/json",
+            key=f"download_json_ls_{template_id}",
+            use_container_width=True
+        )
 
     with action_col3:
-        if st.button("🗑️ 삭제", key=f"delete_ls_btn_{template_id}", type="secondary"):
+        if st.button("🗑️ 삭제", key=f"delete_ls_btn_{template_id}", type="secondary", use_container_width=True):
             st.session_state[f"confirm_delete_ls_{template_id}"] = True
+            st.rerun()
 
     # 삭제 확인 대화상자
     if st.session_state.get(f"confirm_delete_ls_{template_id}", False):
