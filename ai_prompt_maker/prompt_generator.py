@@ -4,35 +4,31 @@ Prompt Generator
 키워드 조합으로 구조화된 프롬프트를 생성하는 엔진
 """
 from typing import Dict, List
-from .models import PromptComponent
+from .models import PromptComponent, OutputFormat
 
 
 class PromptGenerator:
     """프롬프트 생성 엔진"""
 
-    def __init__(self):
-        self.template_format = """<Role>
-{role}
-</Role>
+    def __init__(self, output_format: OutputFormat = OutputFormat.XML):
+        self.output_format = output_format
 
-<Goal>
-{goal}
-</Goal>
+    def generate_prompt(self, components: PromptComponent, output_format: OutputFormat = None) -> str:
+        """컴포넌트로부터 프롬프트 생성
 
-<Context>
-{context}
-</Context>
+        Args:
+            components: 프롬프트 컴포넌트
+            output_format: 출력 포맷 (None이면 인스턴스 기본값 사용)
+        """
+        fmt = output_format or self.output_format
 
-<Output>
-{output}
-</Output>
+        if fmt == OutputFormat.MARKDOWN:
+            return self._generate_markdown_prompt(components)
+        else:
+            return self._generate_xml_prompt(components)
 
-<Rule>
-{rule}
-</Rule>"""
-
-    def generate_prompt(self, components: PromptComponent) -> str:
-        """컴포넌트로부터 프롬프트 생성"""
+    def _generate_xml_prompt(self, components: PromptComponent) -> str:
+        """XML 형식 프롬프트 생성"""
         try:
             # Document가 있으면 Goal에 참조 문구 추가
             enhanced_goal = components.goal
@@ -67,6 +63,48 @@ class PromptGenerator:
 
             if rule_section:
                 prompt_parts.append(f"<Rule>\n{rule_section}\n</Rule>")
+
+            return "\n\n".join(prompt_parts)
+
+        except Exception as e:
+            return f"프롬프트 생성 중 오류 발생: {str(e)}"
+
+    def _generate_markdown_prompt(self, components: PromptComponent) -> str:
+        """Markdown 형식 프롬프트 생성"""
+        try:
+            # Document가 있으면 Goal에 참조 문구 추가
+            enhanced_goal = components.goal
+            if components.document and components.document.strip():
+                enhanced_goal = f"{components.goal}\n\n**중요: 아래 제공된 Document를 반드시 참고하세요.**"
+
+            # 각 섹션 생성
+            role_section = self._generate_role_section(components.role)
+            goal_section = self._generate_goal_section(enhanced_goal)
+            document_section = self._generate_document_section(components.document)
+            context_section = self._generate_context_section(components.context)
+            output_section = self._generate_output_section(components.output)
+            rule_section = self._generate_rule_section(components.rule)
+
+            # 전체 프롬프트 조합 (Markdown 형식)
+            prompt_parts = []
+
+            if role_section:
+                prompt_parts.append(f"# Role\n\n{role_section}")
+
+            if goal_section:
+                prompt_parts.append(f"# Goal\n\n{goal_section}")
+
+            if document_section:
+                prompt_parts.append(f"# Document\n\n{document_section}")
+
+            if context_section:
+                prompt_parts.append(f"# Context\n\n{context_section}")
+
+            if output_section:
+                prompt_parts.append(f"# Output\n\n{output_section}")
+
+            if rule_section:
+                prompt_parts.append(f"# Rule\n\n{rule_section}")
 
             return "\n\n".join(prompt_parts)
 

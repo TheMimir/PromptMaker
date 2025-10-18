@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import shutil
 
-from .models import PromptTemplate, PromptComponent, PromptVersion, PromptCategory
+from .models import PromptTemplate, PromptComponent, PromptVersion, PromptCategory, OutputFormat
 from .models import TemplateNotFoundError, PromptValidationError
 from .prompt_generator import PromptGenerator
 
@@ -303,8 +303,13 @@ class PromptMakerService:
                 }
             }
 
-    def generate_prompt(self, components: PromptComponent) -> str:
-        """프롬프트 생성"""
+    def generate_prompt(self, components: PromptComponent, output_format: OutputFormat = None) -> str:
+        """프롬프트 생성
+
+        Args:
+            components: 프롬프트 컴포넌트
+            output_format: 출력 포맷 (None이면 기본 XML)
+        """
         try:
             # 유효성 검증
             is_valid, error_msg = components.validate()
@@ -312,7 +317,7 @@ class PromptMakerService:
                 raise PromptValidationError(error_msg)
 
             # 프롬프트 생성
-            prompt = self.generator.generate_prompt(components)
+            prompt = self.generator.generate_prompt(components, output_format)
 
             # 통계 업데이트
             self.stats["prompts_generated"] += 1

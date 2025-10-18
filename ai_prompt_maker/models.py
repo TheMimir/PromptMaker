@@ -28,6 +28,12 @@ class PromptCategory(Enum):
     ALL = "전체"
 
 
+class OutputFormat(Enum):
+    """출력 포맷"""
+    XML = "XML"
+    MARKDOWN = "Markdown"
+
+
 @dataclass
 class PromptComponent:
     """프롬프트 구성 요소 (with enhanced security validation)"""

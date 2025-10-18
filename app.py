@@ -22,7 +22,7 @@ from components.template_manager import render_template_manager
 from components.prompt_editor import render_prompt_editor
 from components.prompt_guide import render_prompt_guide
 from ai_prompt_maker.service import PromptMakerService
-from ai_prompt_maker.models import PromptTemplate, PromptComponent, PromptCategory, PromptValidationError
+from ai_prompt_maker.models import PromptTemplate, PromptComponent, PromptCategory, PromptValidationError, OutputFormat
 from utils.template_storage import TemplateStorageManager
 
 
@@ -512,6 +512,23 @@ def render_prompt_generator(domain: str = "game_dev"):
     st.divider()
 
     # ═══════════════════════════════════════════════════════════
+    # 프롬프트 포맷 선택 (XML 또는 Markdown)
+    # ═══════════════════════════════════════════════════════════
+    st.markdown("### 🔤 프롬프트 포맷")
+    selected_output_format_str = st.radio(
+        "생성할 프롬프트의 포맷을 선택하세요",
+        options=["XML", "Markdown"],
+        horizontal=True,
+        key=f"{domain}_output_format_radio",
+        help="XML: <Role>, <Goal> 등의 태그 형식 | Markdown: # Role, # Goal 등의 마크다운 형식"
+    )
+
+    # 선택된 포맷을 Enum으로 변환
+    selected_output_format = OutputFormat.XML if selected_output_format_str == "XML" else OutputFormat.MARKDOWN
+
+    st.divider()
+
+    # ═══════════════════════════════════════════════════════════
     # 프롬프트 생성 버튼 (폼 외부)
     # ═══════════════════════════════════════════════════════════
     submitted = st.button(
@@ -583,7 +600,7 @@ def render_prompt_generator(domain: str = "game_dev"):
                     rule=expanded_rules
                 )
 
-                generated_prompt = service.generate_prompt(components)
+                generated_prompt = service.generate_prompt(components, selected_output_format)
                 st.session_state[f"{session_key}_last_generated_prompt"] = generated_prompt
 
                 # Store components for template saving
